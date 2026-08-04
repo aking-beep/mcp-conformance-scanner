@@ -4,12 +4,13 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 
 **Success metric for v1: 100+ scans.**
 
-## ✅ Shipped (v0.1 → v0.4)
+## ✅ Shipped (v0.1 → v0.5)
 - MCP endpoint scanning over Streamable HTTP (JSON-RPC 2.0)
 - Handshake / version / capabilities validation
 - Tool, resource, and prompt validation
 - Error-handling probes (unknown method, malformed input)
 - Authentication review (enforcement + OAuth/bearer discovery)
+- Deeper OAuth 2.1 validation (PRM, AS metadata, PKCE S256, refresh_token, DCR)
 - Security checks (TLS, CORS, prompt-injection surface, destructive-tool guardrails)
 - Streaming (SSE) detection
 - Documentation scoring
@@ -24,7 +25,6 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 - GitHub Action for CI conformance gating (`action.yml`, `--min-grade`)
 
 ## 🔶 In progress
-- Deeper OAuth 2.1 flow validation (AS metadata, token refresh)
 - Saved reports via optional email capture
 
 ## 🔷 Planned

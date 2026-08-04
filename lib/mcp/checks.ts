@@ -2,6 +2,7 @@
 // Scoring: pass=1, warn=0.5, fail=0, skip=excluded from its category average.
 
 import type { McpProbe } from "./client";
+import { asSupportsPkceS256, asSupportsRefresh } from "./oauth";
 import type { CheckCategory, CheckResult, CheckStatus } from "./types";
 
 // Known MCP protocol revisions, newest first.
@@ -194,23 +195,183 @@ export function runChecks(probe: McpProbe, url?: string): CheckResult[] {
   const authRequired = probe.httpMeta.initHttpStatus === 401 || probe.httpMeta.initHttpStatus === 403;
   const wwwAuth = probe.httpMeta.wwwAuthenticate || "";
   const looksOAuth = /bearer|oauth|dpop/i.test(wwwAuth);
+  const oauth = probe.oauth;
+  const hasPrm = !!oauth?.prm;
+  const hasAs = !!oauth?.asMetadata;
+  const asMeta = oauth?.asMetadata ?? null;
+
   if (authRequired) {
     checks.push(mk("auth.required", "auth", "Authentication enforced", "pass",
       `Endpoint requires auth (HTTP ${probe.httpMeta.initHttpStatus}).`, 0.7));
     checks.push(mk("auth.scheme", "auth", "Auth scheme advertised",
       looksOAuth ? "pass" : wwwAuth ? "warn" : "warn",
-      wwwAuth ? `WWW-Authenticate: ${wwwAuth}` : "Auth required but no WWW-Authenticate challenge returned.",
+      wwwAuth ? `WWW-Authenticate: ${wwwAuth.slice(0, 180)}` : "Auth required but no WWW-Authenticate challenge returned.",
       1,
       looksOAuth ? undefined : "Advertise OAuth 2.1 / bearer via a WWW-Authenticate challenge so clients can discover it."));
   } else {
-    checks.push(mk("auth.required", "auth", "Authentication", "warn",
-      "Endpoint responded to initialize with no authentication. Fine for public/demo servers, risky for anything with side effects.",
+    checks.push(mk("auth.required", "auth", "Authentication", hasPrm ? "pass" : "warn",
+      hasPrm
+        ? "Endpoint is reachable without a token, but Protected Resource Metadata is published (optional / mixed auth)."
+        : "Endpoint responded to initialize with no authentication. Fine for public/demo servers, risky for anything with side effects.",
       0.7,
-      "For non-public servers, require OAuth 2.1 bearer tokens (MCP auth spec)."));
-    checks.push(mk("auth.scheme", "auth", "OAuth support", looksOAuth ? "pass" : "warn",
-      looksOAuth ? "OAuth/bearer challenge present." : "No OAuth challenge observed on the unauthenticated path.",
+      hasPrm ? undefined : "For non-public servers, require OAuth 2.1 bearer tokens (MCP auth spec)."));
+    checks.push(mk("auth.scheme", "auth", "OAuth support",
+      looksOAuth || hasPrm ? "pass" : "warn",
+      looksOAuth
+        ? "OAuth/bearer challenge present."
+        : hasPrm
+        ? "No WWW-Authenticate on the open path; OAuth discovered via Protected Resource Metadata."
+        : "No OAuth challenge or Protected Resource Metadata observed.",
       1,
-      "Implement the MCP OAuth 2.1 flow (authorization server metadata + token refresh) for production use."));
+      looksOAuth || hasPrm
+        ? undefined
+        : "Implement the MCP OAuth 2.1 flow (authorization server metadata + token refresh) for production use."));
+  }
+
+  // Protected Resource Metadata (RFC 9728)
+  if (authRequired || hasPrm || oauth?.resourceMetadataUrl) {
+    const prmStatus: CheckStatus = hasPrm
+      ? "pass"
+      : authRequired
+      ? "fail"
+      : "skip";
+    checks.push(mk("auth.prm", "auth", "Protected Resource Metadata",
+      prmStatus,
+      hasPrm
+        ? `PRM found via ${oauth?.prmSource} at ${oauth?.prmUrl}.`
+        : authRequired
+        ? "No RFC 9728 Protected Resource Metadata document discovered (WWW-Authenticate resource_metadata or well-known)."
+        : "PRM not published (optional when the server is fully public).",
+      1,
+      hasPrm
+        ? undefined
+        : "Serve /.well-known/oauth-protected-resource and include resource_metadata on 401 WWW-Authenticate.",
+      hasPrm
+        ? {
+            resource: oauth?.prm?.resource,
+            authorization_servers: oauth?.prm?.authorization_servers,
+            scopes_supported: oauth?.prm?.scopes_supported,
+          }
+        : undefined));
+
+    if (hasPrm) {
+      const servers = oauth?.prm?.authorization_servers ?? [];
+      checks.push(mk("auth.prm.servers", "auth", "authorization_servers listed",
+        servers.length ? "pass" : "fail",
+        servers.length
+          ? `Trusts ${servers.length} authorization server(s): ${servers.slice(0, 2).join(", ")}${servers.length > 2 ? "…" : ""}.`
+          : "PRM document is missing authorization_servers (required by MCP).",
+        0.9,
+        servers.length ? undefined : "Include at least one authorization_servers entry in the PRM document."));
+    }
+  } else {
+    checks.push(mk("auth.prm", "auth", "Protected Resource Metadata", "skip",
+      "Skipped — public endpoint with no OAuth discovery signals.", 1));
+  }
+
+  // Authorization Server metadata (RFC 8414 / OIDC)
+  if (hasPrm || authRequired) {
+    checks.push(mk("auth.asMetadata", "auth", "Authorization Server metadata",
+      hasAs ? "pass" : hasPrm ? "fail" : "warn",
+      hasAs
+        ? `AS metadata via ${oauth?.asMetadataSource} (${oauth?.asMetadataUrl}).`
+        : hasPrm
+        ? "PRM lists an authorization server but its metadata document was not reachable."
+        : "No authorization server to probe.",
+      1,
+      hasAs
+        ? undefined
+        : "Publish RFC 8414 (.well-known/oauth-authorization-server) or OIDC Discovery metadata.",
+      hasAs
+        ? {
+            issuer: asMeta?.issuer,
+            authorization_endpoint: asMeta?.authorization_endpoint,
+            token_endpoint: asMeta?.token_endpoint,
+          }
+        : undefined));
+
+    const hasAuthz = !!asMeta?.authorization_endpoint;
+    const hasToken = !!asMeta?.token_endpoint;
+    let tokenEndpointDetail = "No AS metadata to validate endpoints.";
+    if (hasAs) {
+      tokenEndpointDetail =
+        hasAuthz && hasToken
+          ? "authorization_endpoint and token_endpoint are present."
+          : `Missing ${[!hasAuthz && "authorization_endpoint", !hasToken && "token_endpoint"].filter(Boolean).join(" and ")}.`;
+    }
+    checks.push(mk("auth.tokenEndpoint", "auth", "Token + authorize endpoints",
+      hasAs ? (hasAuthz && hasToken ? "pass" : "fail") : "skip",
+      tokenEndpointDetail,
+      0.9,
+      hasAuthz && hasToken
+        ? undefined
+        : "AS metadata must advertise authorization_endpoint and token_endpoint."));
+
+    // PKCE S256 — required for MCP clients per the authorization spec
+    const pkce = asSupportsPkceS256(asMeta);
+    const pkceMethods = asMeta?.code_challenge_methods_supported;
+    let pkceDetail = "No AS metadata.";
+    if (hasAs) {
+      if (pkce) {
+        pkceDetail = `code_challenge_methods_supported includes S256 (${(pkceMethods ?? []).join(", ")}).`;
+      } else if (Array.isArray(pkceMethods)) {
+        pkceDetail = `PKCE methods ${JSON.stringify(pkceMethods)} do not include S256 — MCP clients must refuse to proceed.`;
+      } else {
+        pkceDetail = "code_challenge_methods_supported is missing — MCP clients must refuse to proceed.";
+      }
+    }
+    checks.push(mk("auth.pkce", "auth", "PKCE S256 support",
+      hasAs ? (pkce ? "pass" : "fail") : "skip",
+      pkceDetail,
+      1,
+      pkce
+        ? undefined
+        : 'Advertise code_challenge_methods_supported: ["S256"] in AS / OIDC metadata.'));
+
+    // Refresh tokens
+    const refresh = asSupportsRefresh(asMeta);
+    const grants = asMeta?.grant_types_supported;
+    let refreshDetail = "No AS metadata.";
+    if (hasAs) {
+      if (refresh) {
+        refreshDetail = "grant_types_supported includes refresh_token.";
+      } else if (Array.isArray(grants)) {
+        refreshDetail = `grant_types_supported=${JSON.stringify(grants)} — no refresh_token (clients cannot silently renew).`;
+      } else {
+        refreshDetail = "grant_types_supported omitted — cannot confirm refresh_token support.";
+      }
+    }
+    checks.push(mk("auth.refresh", "auth", "Refresh token grant",
+      hasAs ? (refresh ? "pass" : "warn") : "skip",
+      refreshDetail,
+      0.8,
+      refresh
+        ? undefined
+        : "Support the refresh_token grant so long-lived MCP sessions can renew access tokens."));
+
+    // Dynamic Client Registration (optional but valuable for MCP)
+    checks.push(mk("auth.dcr", "auth", "Dynamic Client Registration",
+      hasAs ? (asMeta?.registration_endpoint ? "pass" : "warn") : "skip",
+      hasAs
+        ? asMeta?.registration_endpoint
+          ? `registration_endpoint: ${asMeta.registration_endpoint}`
+          : "No registration_endpoint — clients need pre-registered credentials or CIMD."
+        : "No AS metadata.",
+      0.5,
+      asMeta?.registration_endpoint
+        ? undefined
+        : "Offer RFC 7591 Dynamic Client Registration or document Client ID Metadata Documents."));
+  } else {
+    for (const [id, label] of [
+      ["auth.asMetadata", "Authorization Server metadata"],
+      ["auth.tokenEndpoint", "Token + authorize endpoints"],
+      ["auth.pkce", "PKCE S256 support"],
+      ["auth.refresh", "Refresh token grant"],
+      ["auth.dcr", "Dynamic Client Registration"],
+    ] as const) {
+      checks.push(mk(id, "auth", label, "skip",
+        "Skipped — no OAuth discovery surface on this public endpoint.", 0.8));
+    }
   }
 
   // ---------- STREAMING ----------

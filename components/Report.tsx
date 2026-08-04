@@ -54,8 +54,9 @@ export function Report({ report }: { report: ScanReport }) {
   // Build the headline quick-scan chips (mirrors the product spec).
   const chip = (id: string, label: string, fallback: string) => {
     const c = findCheck(report, id);
-    const st = c ? (c.status === "skip" ? "warn" : c.status) : "warn";
-    return <HeadlineChip key={id} label={label} status={st as any} note={c?.detail ?? fallback} />;
+    if (c?.status === "skip") return null;
+    const st = c ? c.status : "warn";
+    return <HeadlineChip key={id} label={label} status={st as "pass" | "warn" | "fail"} note={c?.detail ?? fallback} />;
   };
 
   async function copy(text: string, tag: string) {
@@ -132,11 +133,13 @@ export function Report({ report }: { report: ScanReport }) {
       {/* Quick-scan chips */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {chip("protocol.version", "MCP version", "Version detection")}
-        {chip("auth.scheme", "Authentication", "OAuth / bearer")}
+        {chip("auth.prm", "OAuth PRM", "Protected resource metadata")}
+        {chip("auth.pkce", "PKCE S256", "AS metadata")}
         {chip("streaming.support", "Streaming", "SSE support")}
         {chip("tools.schema", "Schema validation", "Tool input schemas")}
         {chip("security.injection", "Prompt-injection protection", "Injection surface")}
         {chip("errors.unknownMethod", "Error handling", "JSON-RPC errors")}
+        {chip("auth.refresh", "Token refresh", "refresh_token grant")}
       </div>
 
       {/* Compatibility matrix */}

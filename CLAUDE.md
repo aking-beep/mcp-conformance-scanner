@@ -21,9 +21,10 @@ orchestrator, which calls, in order:
    HTTP (JSON-RPC 2.0): `initialize` → `notifications/initialized` → `tools/list` /
    `resources/list` / `prompts/list`, plus an unknown-method probe and a malformed-body
    probe. Parses both `application/json` and `text/event-stream`; carries `Mcp-Session-Id`.
+   Then `lib/mcp/oauth.ts` discovers RFC 9728 PRM and AS metadata (PKCE / refresh).
    For `kind: "github"`, `lib/mcp/github.ts` statically inspects the repo via the GitHub API.
    For `kind: "docker"`, `lib/mcp/docker.ts` inspects the OCI manifest + config (registry API).
-2. `lib/mcp/checks.ts` — `runChecks(probe, url)` → ~20 `CheckResult`s across 9 categories.
+2. `lib/mcp/checks.ts` — `runChecks(probe, url)` → ~20+ `CheckResult`s across 9 categories.
 3. `lib/mcp/scoring.ts` — rolls checks into weighted category scores, overall grade
    (weights re-normalize over categories that apply, so absent capabilities don't penalize),
    plus security / enterprise-readiness / documentation scores, recommendations, next steps.
@@ -55,7 +56,9 @@ orchestrator, which calls, in order:
   `lib/mcp/docker.ts` (manifest + config blob; optional local `docker inspect`).
 - DONE: Conformance badge at `GET /api/badge?url=` / `?repo=` / `?image=` (or static `?grade=`).
 - DONE: GitHub Action (`action.yml`) + CLI `--min-grade` / `--report` / `--github-output`.
-- No remaining scan-kind stubs. Next product work: deeper OAuth, saved reports.
+- DONE: Deeper OAuth 2.1 (`lib/mcp/oauth.ts`) — RFC 9728 PRM, AS metadata, PKCE S256,
+  refresh_token grant, Dynamic Client Registration discovery.
+- No remaining scan-kind stubs. Next product work: optional saved reports.
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
@@ -67,7 +70,7 @@ orchestrator, which calls, in order:
 - `MCP_DOCKER_LOCAL` — set to `1` to also run local `docker image inspect`.
 
 ## Notes for the next change
-- Deeper OAuth 2.1 validation (AS metadata, token refresh) is the next protocol depth item.
+- Optional saved reports via email capture is the remaining "in progress" item.
 - Consider pinning/upgrading Next.js past 14.2.5 (security advisory).
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.

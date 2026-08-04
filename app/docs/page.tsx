@@ -84,7 +84,7 @@ npm run scan -- https://your-server.com/mcp`}</Code>
           <li><b className="text-ink">Protocol compliance (22%)</b> — reachability, version, serverInfo, capabilities.</li>
           <li><b className="text-ink">Tools (18%)</b> — naming, JSON-Schema inputs, descriptions.</li>
           <li><b className="text-ink">Error handling (12%)</b> — unknown-method (-32601) and malformed-input behavior.</li>
-          <li><b className="text-ink">Authentication (12%)</b> — enforcement and OAuth/bearer discovery.</li>
+          <li><b className="text-ink">Authentication (12%)</b> — enforcement, WWW-Authenticate, RFC 9728 PRM, AS metadata, PKCE S256, refresh_token, DCR.</li>
           <li><b className="text-ink">Security (14%)</b> — TLS, CORS, injection surface, destructive-tool guardrails.</li>
           <li><b className="text-ink">Resources / Prompts (6% each)</b> — URI hygiene and prompt validity when advertised.</li>
           <li><b className="text-ink">Streaming (6%)</b> — Streamable HTTP / SSE support.</li>

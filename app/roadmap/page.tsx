@@ -19,13 +19,13 @@ const COLUMNS: { title: string; tone: string; items: string[] }[] = [
       "Docker / OCI image metadata scanning",
       "Conformance badge (SVG) for READMEs",
       "GitHub Action for CI grade gating",
+      "OAuth 2.1 PRM / AS metadata / PKCE / refresh checks",
     ],
   },
   {
     title: "In progress",
     tone: "#f0b23a",
     items: [
-      "Deeper OAuth 2.1 flow validation",
       "Saved reports via optional email capture",
     ],
   },

@@ -125,8 +125,17 @@ export function buildNextSteps(overall: number, checks: CheckResult[]): string[]
   if (failing.length) {
     steps.push(`Fix ${failing.length} failing check${failing.length > 1 ? "s" : ""} before publishing (see high-priority recommendations).`);
   }
-  if (checks.find((c) => c.id === "auth.scheme" && c.status !== "pass")) {
+  if (checks.find((c) => c.id === "auth.scheme" && c.status !== "pass" && c.status !== "skip")) {
     steps.push("Add OAuth 2.1 with token refresh for any server that performs writes or accesses private data.");
+  }
+  if (checks.find((c) => c.id === "auth.prm" && c.status === "fail")) {
+    steps.push("Publish RFC 9728 Protected Resource Metadata and point to it from WWW-Authenticate on 401.");
+  }
+  if (checks.find((c) => c.id === "auth.pkce" && c.status === "fail")) {
+    steps.push("Advertise PKCE S256 in authorization server metadata (code_challenge_methods_supported).");
+  }
+  if (checks.find((c) => c.id === "auth.refresh" && c.status === "warn")) {
+    steps.push("Enable the refresh_token grant so clients can renew access without a full re-login.");
   }
   if (checks.find((c) => c.id === "streaming.support" && c.status !== "pass")) {
     steps.push("Adopt Streamable HTTP (text/event-stream) so long tool calls can report progress.");

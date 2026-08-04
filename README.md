@@ -97,7 +97,7 @@ npm run scan -- --min-grade=B --report report.json https://your-server.com/mcp
 
 ## Roadmap
 
-Deeper OAuth 2.1 validation and optional saved reports are next. See **/roadmap**.
+Optional saved reports via email capture are next. See **/roadmap**.
 
 ## License
 

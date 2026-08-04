@@ -12,7 +12,7 @@ const FEATURES = [
   ["Tool & schema validation", "Every tool checked for safe names, typed JSON-Schema, and docs."],
   ["Resources & prompts", "URI hygiene and prompt definitions verified when advertised."],
   ["Error handling", "Probes unknown methods and malformed input for graceful JSON-RPC errors."],
-  ["Auth review", "Detects OAuth/bearer enforcement and flags unauthenticated write surfaces."],
+  ["Auth / OAuth 2.1", "PRM, AS metadata, PKCE S256, and refresh_token discovery for remote servers."],
   ["Security & injection", "TLS, CORS, prompt-injection surface, and destructive-tool guardrails."],
   ["Streaming support", "Confirms Streamable HTTP (SSE) for progress on long tool calls."],
   ["Model compatibility", "Estimates fit for Claude, OpenAI, Gemini, and Bedrock."],

@@ -2,6 +2,8 @@
 // Handles both application/json and text/event-stream responses, session ids,
 // and gracefully degrades so the scanner can report what it observed.
 
+import { discoverOAuth, type OAuthDiscovery } from "./oauth";
+
 export interface JsonRpcResponse {
   jsonrpc: "2.0";
   id?: string | number | null;
@@ -31,6 +33,8 @@ export interface McpProbe {
     wwwAuthenticate: string | null;
     corsAllowOrigin: string | null;
   };
+  /** OAuth 2.1 discovery results (PRM + AS metadata). Always attempted for HTTP endpoints. */
+  oauth: OAuthDiscovery | null;
   errors: string[];
 }
 
@@ -116,6 +120,7 @@ export async function probeMcpEndpoint(
       wwwAuthenticate: null,
       corsAllowOrigin: null,
     },
+    oauth: null,
     errors: [],
   };
 
@@ -131,7 +136,7 @@ export async function probeMcpEndpoint(
       params: {
         protocolVersion: CLIENT_PROTOCOL_VERSION,
         capabilities: { roots: { listChanged: true }, sampling: {} },
-        clientInfo: { name: "mcp-conformance-scanner", version: "0.1.0" },
+        clientInfo: { name: "mcp-conformance-scanner", version: "0.5.0" },
       },
     }, baseHeaders);
 
@@ -219,6 +224,14 @@ export async function probeMcpEndpoint(
     probe.raw.malformed = { httpStatus: res.status, body: body.slice(0, 400) };
   } catch {
     /* non-fatal */
+  }
+
+  // 6) OAuth 2.1 discovery (PRM → AS metadata). Best-effort; never blocks the rest of the scan.
+  try {
+    probe.oauth = await discoverOAuth(url, probe.httpMeta.wwwAuthenticate);
+    for (const e of probe.oauth.errors) probe.errors.push(`oauth: ${e}`);
+  } catch (e: any) {
+    probe.errors.push(`OAuth discovery failed: ${e?.message ?? String(e)}`);
   }
 
   return probe;
