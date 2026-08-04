@@ -7,21 +7,20 @@ where first name, last name, email, company, size, newsletter, and testing opt-i
 ## 1. Accept your base invite / open the base
 Use your Airtable invite email (do **not** paste invite tokens into git or public chats).
 
-## 2. Create a table named `Leads` with these fields
+## 2. Use your `Signups` table (MCP Sign Up base)
+
+You already have Full Name, First Name, Last Name, Email. **Add** these fields:
 
 | Field name           | Type            | Notes                                      |
 |----------------------|-----------------|--------------------------------------------|
 | Lead ID              | Single line text|                                            |
-| First Name           | Single line text|                                            |
-| Last Name            | Single line text|                                            |
-| Email                | Email           |                                            |
 | Company              | Single line text|                                            |
 | Company Size         | Single select   | Options: `solo`, `small`, `mid`, `enterprise` |
 | Newsletter           | Checkbox        |                                            |
 | Contribute Testing   | Checkbox        |                                            |
 | Signed Up At         | Single line text| ISO timestamp from the app                 |
 
-Exact names matter (or change `AIRTABLE_LEADS_TABLE` / field map in code).
+Exact names matter. Default table name in the app is `Signups` (`AIRTABLE_LEADS_TABLE`).
 
 ## 3. Create a Personal Access Token
 https://airtable.com/create/tokens
@@ -38,7 +37,7 @@ The `app…` segment is `AIRTABLE_BASE_ID`.
 ```
 AIRTABLE_API_KEY=pat...
 AIRTABLE_BASE_ID=app...
-AIRTABLE_LEADS_TABLE=Leads
+AIRTABLE_LEADS_TABLE=Signups
 ACCESS_GATE_SECRET=<long random string>
 NEXT_PUBLIC_BASE_URL=https://mcp-conformance-scanner.vercel.app
 ```

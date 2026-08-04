@@ -9,29 +9,26 @@ export function airtableConfigured(): boolean {
 }
 
 /**
- * Expected Airtable table columns (create these exact names, or set AIRTABLE_LEADS_TABLE):
- *   Lead ID (Single line text)
- *   First Name (Single line text)
- *   Last Name (Single line text)
- *   Email (Email)
- *   Company (Single line text)
- *   Company Size (Single select: solo, small, mid, enterprise)
- *   Newsletter (Checkbox)
- *   Contribute Testing (Checkbox)
- *   Signed Up At (Created time OR Single line text / Date)
+ * Matches the "MCP Sign Up" base / "Signups" table.
+ * Required columns (exact names):
+ *   Full Name, First Name, Last Name, Email
+ * Recommended (app sends these — add the columns or writes will fail):
+ *   Lead ID, Company, Company Size (solo|small|mid|enterprise),
+ *   Newsletter, Contribute Testing, Signed Up At
  */
 export async function persistLeadAirtable(
   lead: AccessLead,
 ): Promise<{ ok: true; recordId: string } | { ok: false; error: string; status?: number }> {
   const token = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_ACCESS_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID;
-  const table = process.env.AIRTABLE_LEADS_TABLE || "Leads";
+  const table = process.env.AIRTABLE_LEADS_TABLE || "Signups";
 
   if (!token || !baseId) {
     return { ok: false, error: "Airtable is not configured (need AIRTABLE_API_KEY + AIRTABLE_BASE_ID)." };
   }
 
   const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`;
+  const fullName = `${lead.firstName} ${lead.lastName}`.trim();
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -41,10 +38,11 @@ export async function persistLeadAirtable(
     body: JSON.stringify({
       typecast: true,
       fields: {
-        "Lead ID": lead.id,
+        "Full Name": fullName,
         "First Name": lead.firstName,
         "Last Name": lead.lastName,
         Email: lead.email,
+        "Lead ID": lead.id,
         Company: lead.company,
         "Company Size": lead.companySize,
         Newsletter: lead.newsletter,
