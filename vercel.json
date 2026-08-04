@@ -3,7 +3,16 @@
   "framework": "nextjs",
   "functions": {
     "app/api/scan/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "app/api/badge/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/reports/route.ts": {
+      "maxDuration": 15
+    },
+    "app/api/reports/[id]/route.ts": {
+      "maxDuration": 10
     }
   }
 }

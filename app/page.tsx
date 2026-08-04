@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AccessGate, loadStoredAccess, type AccessProfile } from "@/components/AccessGate";
 import { ScanForm, type ScanKind } from "@/components/ScanForm";
 import { Report } from "@/components/Report";
 import { FeedbackButton } from "@/components/Feedback";
@@ -19,9 +20,40 @@ const FEATURES = [
 ];
 
 export default function Home() {
+  const [access, setAccess] = useState<AccessProfile | null>(null);
+  const [gateReady, setGateReady] = useState(false);
+  const [gateRequired, setGateRequired] = useState(true);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<ScanReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stored = loadStoredAccess();
+      try {
+        const res = await fetch("/api/access", {
+          headers: stored?.token ? { authorization: `Bearer ${stored.token}` } : undefined,
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        setGateRequired(!!data.required);
+        if (!data.required) {
+          setAccess(stored ?? { token: "", email: "", firstName: "" });
+        } else if (data.unlocked) {
+          // Cookie and/or stored token already valid
+          setAccess(stored ?? { token: "", email: data.email || "", firstName: "" });
+        }
+      } catch {
+        if (!cancelled && stored) setAccess(stored);
+      } finally {
+        if (!cancelled) setGateReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function scan(kind: ScanKind, value: string) {
     setLoading(true);
@@ -32,10 +64,17 @@ export default function Home() {
         kind === "endpoint" ? { kind, url: value } : kind === "github" ? { kind, repo: value } : { kind, image: value };
       const res = await fetch("/api/scan", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(access?.token ? { authorization: `Bearer ${access.token}` } : {}),
+        },
         body: JSON.stringify(body),
       });
       const data = await res.json();
+      if (res.status === 401 && data.code === "access_required") {
+        setAccess(null);
+        throw new Error("Please complete the short signup to continue.");
+      }
       if (!res.ok) throw new Error(data.error || "Scan failed");
       setReport(data as ScanReport);
     } catch (e: any) {
@@ -45,9 +84,10 @@ export default function Home() {
     }
   }
 
+  const unlocked = !gateRequired || access !== null;
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 md:py-14">
-      {/* Nav */}
       <header className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg grid place-items-center font-bold text-white" style={{ background: "linear-gradient(135deg,#6b97ff,#7c5cff)" }}>M</div>
@@ -61,7 +101,6 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Hero */}
       <section className="text-center mb-8">
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
           Is your <span style={{ color: "#7c5cff" }}>MCP server</span> ready?
@@ -72,10 +111,25 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Scan form */}
-      <ScanForm onScan={scan} loading={loading} />
+      {!gateReady && (
+        <div className="card p-5 text-sm text-sub">Loading…</div>
+      )}
 
-      {/* Loading skeleton */}
+      {gateReady && !unlocked && (
+        <AccessGate onUnlocked={setAccess} />
+      )}
+
+      {gateReady && unlocked && (
+        <>
+          {access?.firstName && (
+            <p className="text-xs text-sub mb-3">
+              Signed in as {access.firstName} ({access.email}). Free scans are rate-limited to protect the service.
+            </p>
+          )}
+          <ScanForm onScan={scan} loading={loading} />
+        </>
+      )}
+
       {loading && (
         <div className="card p-6 mt-6 overflow-hidden">
           <div className="relative">
@@ -89,7 +143,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Error */}
       {error && !loading && (
         <div className="card p-5 mt-6 border-bad/40">
           <div className="text-bad font-medium">Scan error</div>
@@ -97,15 +150,13 @@ export default function Home() {
         </div>
       )}
 
-      {/* Report */}
       {report && !loading && (
         <div className="mt-6">
           <Report report={report} />
         </div>
       )}
 
-      {/* Features */}
-      {!report && !loading && (
+      {!report && !loading && gateReady && (
         <section className="mt-12">
           <h2 className="text-sm uppercase tracking-wide text-sub mb-4">What we check</h2>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -119,7 +170,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Footer */}
       <footer className="mt-16 pt-8 border-t border-line text-sm text-sub flex flex-wrap items-center justify-between gap-3">
         <span>© {new Date().getFullYear()} ARC Labs · MIT licensed · Free forever for basic scans</span>
         <div className="flex gap-4">

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { runScan } from "@/lib/mcp/scan";
 import type { Grade } from "@/lib/mcp/types";
+import { LIMITS, clientIp, rateLimit } from "@/lib/security/ratelimit";
+import { assertPublicHttpUrl } from "@/lib/security/ssrf";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const GRADE_COLORS: Record<string, string> = {
   "A+": "#22c55e",
@@ -20,8 +22,10 @@ const GRADE_COLORS: Record<string, string> = {
 };
 
 function svgBadge(label: string, grade: string, score: number | null) {
-  const color = GRADE_COLORS[grade] ?? "#94a3b8";
-  const right = score != null ? `${grade} ${score}` : grade;
+  // Sanitize grade/score for SVG text (no angle brackets)
+  const safeGrade = String(grade).replace(/[<>&"']/g, "").slice(0, 8);
+  const color = GRADE_COLORS[safeGrade] ?? "#94a3b8";
+  const right = score != null && Number.isFinite(score) ? `${safeGrade} ${Math.round(score)}` : safeGrade;
   const leftW = 118;
   const rightW = 54 + (score != null ? 18 : 0);
   const w = leftW + rightW;
@@ -49,13 +53,23 @@ function svgBadge(label: string, grade: string, score: number | null) {
 
 /**
  * Conformance badge for READMEs.
- *
- *   /api/badge?url=https://mcp.example.com/mcp
- *   /api/badge?repo=owner/repo
- *   /api/badge?image=ghcr.io/org/mcp:latest
- *   /api/badge?grade=A&score=94   (static, no scan)
+ * Live scans are rate-limited + SSRF-guarded. Prefer ?grade= for static badges.
  */
 export async function GET(req: Request) {
+  const ip = clientIp(req);
+  const rl = await rateLimit(`badge:${ip}`, LIMITS.badge.limit, LIMITS.badge.windowMs);
+  if (!rl.ok) {
+    const body = svgBadge("mcp conformance", "…", null);
+    return new NextResponse(body, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+      },
+    });
+  }
+
   const { searchParams } = new URL(req.url);
   const gradeParam = searchParams.get("grade");
   const scoreParam = searchParams.get("score");
@@ -71,6 +85,7 @@ export async function GET(req: Request) {
     score = scoreParam != null ? Number(scoreParam) : null;
   } else if (url || repo || image) {
     try {
+      if (url) await assertPublicHttpUrl(url);
       const report = await runScan(
         url
           ? { kind: "endpoint", url }
@@ -88,7 +103,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         error: "Provide ?url=, ?repo=, ?image=, or ?grade= (optional &score=).",
-        example: "/api/badge?url=https://mcp.deepwiki.com/mcp",
+        example: "/api/badge?grade=A&score=94",
       },
       { status: 400 },
     );

@@ -3,6 +3,7 @@
 // and gracefully degrades so the scanner can report what it observed.
 
 import { discoverOAuth, type OAuthDiscovery } from "./oauth";
+import { assertPublicHttpUrl, safeFetch, sanitizeUserHeaders } from "@/lib/security/ssrf";
 
 export interface JsonRpcResponse {
   jsonrpc: "2.0";
@@ -84,7 +85,7 @@ async function rpc(
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -124,7 +125,14 @@ export async function probeMcpEndpoint(
     errors: [],
   };
 
-  const baseHeaders: Record<string, string> = { ...userHeaders };
+  try {
+    await assertPublicHttpUrl(url);
+  } catch (e: any) {
+    probe.errors.push(e?.message ?? "URL blocked by safety policy.");
+    return probe;
+  }
+
+  const baseHeaders: Record<string, string> = { ...sanitizeUserHeaders(userHeaders) };
   const started = Date.now();
 
   // 1) initialize
@@ -136,7 +144,7 @@ export async function probeMcpEndpoint(
       params: {
         protocolVersion: CLIENT_PROTOCOL_VERSION,
         capabilities: { roots: { listChanged: true }, sampling: {} },
-        clientInfo: { name: "mcp-conformance-scanner", version: "0.5.0" },
+        clientInfo: { name: "mcp-conformance-scanner", version: "0.7.0" },
       },
     }, baseHeaders);
 
@@ -213,7 +221,7 @@ export async function probeMcpEndpoint(
   try {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       method: "POST",
       headers: { "content-type": "application/json", accept: "application/json", ...baseHeaders },
       body: "{ this is not valid json",

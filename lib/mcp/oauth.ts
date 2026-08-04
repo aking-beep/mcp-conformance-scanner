@@ -2,6 +2,8 @@
 // Follows MCP authorization (RFC 9728 PRM → RFC 8414 / OIDC AS metadata),
 // checking PKCE (S256) and refresh_token support without performing a full login.
 
+import { safeFetch } from "@/lib/security/ssrf";
+
 export interface ProtectedResourceMetadata {
   resource?: string;
   authorization_servers?: string[];
@@ -49,19 +51,19 @@ async function getJson(url: string): Promise<{ ok: boolean; status: number; json
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), FETCH_MS);
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       method: "GET",
       headers: { accept: "application/json", "user-agent": "mcp-conformance-scanner" },
       signal: controller.signal,
-      redirect: "follow",
     });
     if (!res.ok) return { ok: false, status: res.status, json: null };
     const ct = res.headers.get("content-type") || "";
     const text = await res.text();
+    // Cap body size to avoid memory abuse from huge metadata docs
+    if (text.length > 512_000) return { ok: false, status: res.status, json: null };
     try {
       return { ok: true, status: res.status, json: JSON.parse(text) };
     } catch {
-      // Some servers return JSON without the right content-type
       if (ct.includes("json") || text.trim().startsWith("{")) {
         try {
           return { ok: true, status: res.status, json: JSON.parse(text) };

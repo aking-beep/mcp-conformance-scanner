@@ -4,6 +4,7 @@
 //   2. Filesystem — REPORT_STORE_DIR (default .data/reports in development)
 //   3. none — save returns null (email webhook may still fire)
 
+import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import type { ScanReport } from "@/lib/mcp/types";
@@ -41,7 +42,7 @@ function fsDir(): string {
 }
 
 function newId(): string {
-  return "rpt_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  return "rpt_" + randomBytes(18).toString("hex");
 }
 
 function expiresIso(from = new Date()): string {
@@ -100,9 +101,8 @@ export async function saveReport(
   const kind = activeStoreKind();
   if (kind === "none") return null;
 
-  const id = report.id?.startsWith("scan_") || report.id?.startsWith("rpt_")
-    ? report.id.replace(/^scan_/, "rpt_")
-    : newId();
+  // Always mint a server-side ID — never trust/reuse client-supplied report ids (overwrite IDOR).
+  const id = newId();
   const stored: StoredReport = {
     id,
     createdAt: new Date().toISOString(),
@@ -113,7 +113,8 @@ export async function saveReport(
 
   if (kind === "upstash") {
     const key = `mcp-report:${id}`;
-    const ok = await upstash("SET", key, JSON.stringify(stored), "EX", REPORT_TTL_SECONDS);
+    // NX: do not overwrite an existing key
+    const ok = await upstash("SET", key, JSON.stringify(stored), "EX", REPORT_TTL_SECONDS, "NX");
     if (ok === null) return null;
   } else {
     await saveFs(stored);
@@ -123,7 +124,7 @@ export async function saveReport(
 }
 
 export async function loadReport(id: string): Promise<StoredReport | null> {
-  if (!/^rpt_[a-z0-9]+$/i.test(id) && !/^scan_[a-z0-9]+$/i.test(id)) return null;
+  if (!/^rpt_[a-f0-9]{20,64}$/i.test(id)) return null;
 
   const kind = activeStoreKind();
   let stored: StoredReport | null = null;

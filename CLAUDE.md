@@ -73,7 +73,8 @@ orchestrator, which calls, in order:
 - `MCP_DOCKER_LOCAL` — set to `1` to also run local `docker image inspect`.
 
 ## Notes for the next change
-- Planned: historical scans / regression tracking, community check rules, leaderboard.
-- Consider pinning/upgrading Next.js past 14.2.5 (security advisory).
+- Production launch checklist: set `ACCESS_GATE_SECRET`, `LEAD_WEBHOOK_URL` (or email webhook),
+  optional Upstash for leads/reports + rate limits, `NEXT_PUBLIC_BASE_URL`.
+- Consider upgrading Next.js past 14.2.5 (security advisory).
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.
