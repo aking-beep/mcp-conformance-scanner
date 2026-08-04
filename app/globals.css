@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background:
+    radial-gradient(1000px 600px at 15% -10%, rgba(91, 140, 255, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(124, 92, 255, 0.1), transparent 55%),
+    #0b0e14;
+  color: #e6ebf5;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer components {
+  .card {
+    @apply bg-panel border border-line rounded-2xl;
+    box-shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition;
+    background: linear-gradient(180deg, #6b97ff, #4f78f0);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.05);
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-ink border border-line transition;
+  }
+  .btn-ghost:hover {
+    @apply bg-panel2;
+  }
+  .btn-ghost:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .input {
+    @apply w-full bg-bg border border-line rounded-xl px-4 py-3 text-sm text-ink;
+    outline: none;
+  }
+  .input::placeholder {
+    @apply text-sub;
+  }
+  .input:focus {
+    @apply border-brand;
+    box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
+  }
+
+  .track {
+    @apply relative h-2 w-full overflow-hidden rounded-full bg-panel2;
+  }
+  .track > span {
+    @apply absolute inset-y-0 left-0 rounded-full;
+  }
+}
