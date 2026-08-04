@@ -54,7 +54,8 @@ orchestrator, which calls, in order:
 - DONE: Docker / OCI **image** scanning (`kind: "docker"`) via registry API —
   `lib/mcp/docker.ts` (manifest + config blob; optional local `docker inspect`).
 - DONE: Conformance badge at `GET /api/badge?url=` / `?repo=` / `?image=` (or static `?grade=`).
-- No remaining scan-kind stubs. Next product work: GitHub Action CI gating, deeper OAuth.
+- DONE: GitHub Action (`action.yml`) + CLI `--min-grade` / `--report` / `--github-output`.
+- No remaining scan-kind stubs. Next product work: deeper OAuth, saved reports.
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
@@ -63,9 +64,10 @@ orchestrator, which calls, in order:
 - `NEXT_PUBLIC_BASE_URL` — for share links.
 - `GITHUB_TOKEN` — higher GitHub API rate limits / private repos / ghcr.io pulls.
 - `DOCKER_REGISTRY_TOKEN` — bearer token for private OCI registries.
+- `MCP_DOCKER_LOCAL` — set to `1` to also run local `docker image inspect`.
 
 ## Notes for the next change
-- GitHub Action for CI conformance gating is the natural next product surface.
+- Deeper OAuth 2.1 validation (AS metadata, token refresh) is the next protocol depth item.
 - Consider pinning/upgrading Next.js past 14.2.5 (security advisory).
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.

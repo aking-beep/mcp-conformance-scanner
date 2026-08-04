@@ -57,6 +57,21 @@ Content-Type: application/json
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-xl font-semibold">GitHub Action</h2>
+        <p className="text-sub text-sm">
+          Gate PRs on a minimum conformance grade. Works with endpoint, GitHub, or Docker targets.
+        </p>
+        <Code>{`- uses: aking-beep/mcp-conformance-scanner@main
+  with:
+    target: https://your-server.com/mcp
+    min-grade: B`}</Code>
+        <p className="text-sub text-sm">
+          CLI flags for the same gate: <code className="font-mono">--min-grade</code>,{" "}
+          <code className="font-mono">--report</code>, <code className="font-mono">--github-output</code>.
+        </p>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-xl font-semibold">Local CLI</h2>
         <Code>{`npm install
 npm run scan -- https://your-server.com/mcp`}</Code>

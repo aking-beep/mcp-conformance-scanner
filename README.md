@@ -72,6 +72,22 @@ The scanner performs a real MCP handshake: `initialize` → `notifications/initi
 malformed body to observe error handling. It parses both `application/json` and `text/event-stream`
 (SSE) responses and carries the `Mcp-Session-Id` header across calls.
 
+## GitHub Action (CI gating)
+
+```yaml
+- uses: aking-beep/mcp-conformance-scanner@main
+  with:
+    target: https://your-server.com/mcp
+    min-grade: B
+```
+
+Also supports `kind: github|docker|endpoint|auto`, writes `mcp-report.json`, and exposes
+`grade` / `score` / `reachable` outputs. CLI equivalent:
+
+```bash
+npm run scan -- --min-grade=B --report report.json https://your-server.com/mcp
+```
+
 ## Conformance badge
 
 ```markdown
@@ -81,8 +97,7 @@ malformed body to observe error handling. It parses both `application/json` and 
 
 ## Roadmap
 
-A GitHub Action for CI gating is next. Endpoint, GitHub, and Docker scan kinds all ship in v0.3.
-See **/roadmap**.
+Deeper OAuth 2.1 validation and optional saved reports are next. See **/roadmap**.
 
 ## License
 

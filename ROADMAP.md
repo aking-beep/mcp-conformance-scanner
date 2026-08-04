@@ -4,7 +4,7 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 
 **Success metric for v1: 100+ scans.**
 
-## ✅ Shipped (v0.1 → v0.3)
+## ✅ Shipped (v0.1 → v0.4)
 - MCP endpoint scanning over Streamable HTTP (JSON-RPC 2.0)
 - Handshake / version / capabilities validation
 - Tool, resource, and prompt validation
@@ -21,9 +21,9 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 - GitHub repository static scanning (`kind: "github"`)
 - Docker / OCI image metadata scanning (`kind: "docker"`)
 - Conformance badge SVG (`GET /api/badge?url=` / `?repo=` / `?image=`)
+- GitHub Action for CI conformance gating (`action.yml`, `--min-grade`)
 
 ## 🔶 In progress
-- GitHub Action for CI conformance gating
 - Deeper OAuth 2.1 flow validation (AS metadata, token refresh)
 - Saved reports via optional email capture
 

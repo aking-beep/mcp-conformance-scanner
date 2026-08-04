@@ -1,0 +1,51 @@
+# Manual / example gate: scan an MCP target and fail below min grade.
+# Other repos can call: uses: aking-beep/mcp-conformance-scanner@main
+name: MCP Conformance
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Endpoint URL, GitHub owner/repo, or Docker image
+        required: true
+        default: https://mcp.deepwiki.com/mcp
+      kind:
+        description: auto | endpoint | github | docker
+        required: false
+        default: auto
+      min_grade:
+        description: Minimum letter grade
+        required: false
+        default: C
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan
+        id: mcp
+        uses: ./
+        with:
+          target: ${{ inputs.target }}
+          kind: ${{ inputs.kind }}
+          min-grade: ${{ inputs.min_grade }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### MCP Conformance" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Grade:** ${{ steps.mcp.outputs.grade }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Score:** ${{ steps.mcp.outputs.score }}/100" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Reachable:** ${{ steps.mcp.outputs.reachable }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Kind:** ${{ steps.mcp.outputs.kind }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-report
+          path: mcp-report.json
+          if-no-files-found: ignore

@@ -1,0 +1,86 @@
+name: MCP Conformance Scan
+description: >-
+  Scan an MCP endpoint, GitHub repo, or Docker image for protocol compliance,
+  security, and multi-model compatibility. Fails the job when the grade is
+  below your threshold.
+author: ARC Labs
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  target:
+    description: MCP endpoint URL, GitHub owner/repo, or Docker image reference
+    required: true
+  kind:
+    description: "Scan kind: auto | endpoint | github | docker"
+    required: false
+    default: auto
+  min-grade:
+    description: Minimum overall letter grade required to pass (default C)
+    required: false
+    default: C
+  github-token:
+    description: Token for GitHub API / ghcr.io (defaults to the job token)
+    required: false
+    default: ${{ github.token }}
+  docker-registry-token:
+    description: Optional bearer token for private OCI registries
+    required: false
+    default: ""
+  report-path:
+    description: Path (relative to the consumer workspace) for the JSON report
+    required: false
+    default: mcp-report.json
+
+outputs:
+  grade:
+    description: Overall letter grade (A+ … F)
+    value: ${{ steps.scan.outputs.grade }}
+  score:
+    description: Overall numeric score 0–100
+    value: ${{ steps.scan.outputs.score }}
+  reachable:
+    description: Whether the target was reachable
+    value: ${{ steps.scan.outputs.reachable }}
+  kind:
+    description: Resolved scan kind
+    value: ${{ steps.scan.outputs.kind }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Install scanner dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci
+
+    - name: Run MCP conformance scan
+      id: scan
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        DOCKER_REGISTRY_TOKEN: ${{ inputs.docker-registry-token }}
+      run: |
+        set -euo pipefail
+        FLAGS=(--min-grade "${{ inputs.min-grade }}" --github-output)
+        KIND="${{ inputs.kind }}"
+        case "$KIND" in
+          endpoint) FLAGS+=(--endpoint) ;;
+          github)   FLAGS+=(--github) ;;
+          docker)   FLAGS+=(--docker) ;;
+          auto|"")  ;;
+          *)
+            echo "Unknown kind: $KIND (expected auto|endpoint|github|docker)" >&2
+            exit 2
+            ;;
+        esac
+        REPORT_PATH="${{ github.workspace }}/${{ inputs.report-path }}"
+        FLAGS+=(--report "$REPORT_PATH")
+        npx --yes tsx cli/scan.ts "${FLAGS[@]}" "${{ inputs.target }}"
