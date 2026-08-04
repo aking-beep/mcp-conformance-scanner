@@ -15,7 +15,7 @@ export default function Docs() {
     <main className="mx-auto max-w-3xl px-4 py-10 md:py-14 space-y-8">
       <header className="flex items-center justify-between">
         <Link href="/" className="text-sm text-sub hover:text-ink">← Back to scanner</Link>
-        <a href="https://github.com/arc-labs/mcp-conformance-scanner" className="text-sm text-sub hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://github.com/aking-beep/mcp-conformance-scanner" className="text-sm text-sub hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
       </header>
 
       <div>

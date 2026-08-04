@@ -45,7 +45,7 @@ export default function Roadmap() {
     <main className="mx-auto max-w-4xl px-4 py-10 md:py-14 space-y-8">
       <header className="flex items-center justify-between">
         <Link href="/" className="text-sm text-sub hover:text-ink">← Back to scanner</Link>
-        <a href="https://github.com/arc-labs/mcp-conformance-scanner/issues" className="text-sm text-sub hover:text-ink" target="_blank" rel="noreferrer">Request a feature</a>
+        <a href="https://github.com/aking-beep/mcp-conformance-scanner/issues" className="text-sm text-sub hover:text-ink" target="_blank" rel="noreferrer">Request a feature</a>
       </header>
 
       <div>

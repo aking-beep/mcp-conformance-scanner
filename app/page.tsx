@@ -57,7 +57,7 @@ export default function Home() {
         <nav className="flex items-center gap-4 text-sm text-sub">
           <Link href="/docs" className="hover:text-ink">Docs</Link>
           <Link href="/roadmap" className="hover:text-ink">Roadmap</Link>
-          <a href="https://github.com/arc-labs/mcp-conformance-scanner" className="hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/aking-beep/mcp-conformance-scanner" className="hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
       </header>
 
