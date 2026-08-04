@@ -60,21 +60,27 @@ orchestrator, which calls, in order:
   refresh_token grant, Dynamic Client Registration discovery.
 - DONE: Saved reports (`lib/reports/store.ts`, `/api/reports`, `/r/[id]`) — explicit opt-in
   only, 30-day TTL, filesystem (dev) or Upstash Redis (prod), optional email webhook.
+- DONE: Public hardening — SSRF guards, rate limits, server-only report IDs, pre-scan access gate.
+- DONE: Airtable lead store (`lib/access/airtable.ts`) — durable CRM for signup PII.
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
+- `ACCESS_GATE_ENABLED` — default true; require signup before scan.
+- `ACCESS_GATE_SECRET` — HMAC secret for access tokens (set in production).
+- `AIRTABLE_API_KEY` + `AIRTABLE_BASE_ID` (+ optional `AIRTABLE_LEADS_TABLE`) — durable leads.
+- `LEAD_WEBHOOK_URL` — optional secondary notify; falls back to `EMAIL_CAPTURE_WEBHOOK_URL`.
 - `EMAIL_CAPTURE_WEBHOOK_URL` — emails the saved-report link; unset = no email.
 - `FEEDBACK_WEBHOOK_URL` — feedback destination; unset = console log.
 - `NEXT_PUBLIC_BASE_URL` — for absolute share links.
-- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — production report store.
+- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — production report store / rate limits.
 - `REPORT_STORE_DIR` — filesystem report store (defaults to `.data/reports` in development).
 - `GITHUB_TOKEN` — higher GitHub API rate limits / private repos / ghcr.io pulls.
 - `DOCKER_REGISTRY_TOKEN` — bearer token for private OCI registries.
 - `MCP_DOCKER_LOCAL` — set to `1` to also run local `docker image inspect`.
 
 ## Notes for the next change
-- Production launch checklist: set `ACCESS_GATE_SECRET`, `LEAD_WEBHOOK_URL` (or email webhook),
-  optional Upstash for leads/reports + rate limits, `NEXT_PUBLIC_BASE_URL`.
+- Production launch checklist: Airtable PAT + base ID, `ACCESS_GATE_SECRET`,
+  `NEXT_PUBLIC_BASE_URL`. See `docs/AIRTABLE_LEADS.md`.
 - Consider upgrading Next.js past 14.2.5 (security advisory).
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.

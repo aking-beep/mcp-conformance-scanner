@@ -1,6 +1,6 @@
 {
   "name": "mcp-conformance-scanner",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "description": "Free MCP Conformance Scanner — grade any MCP server on protocol compliance, security, and multi-model compatibility.",
   "license": "MIT",

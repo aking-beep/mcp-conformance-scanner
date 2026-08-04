@@ -3,6 +3,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, appendFile, readFile } from "node:fs/promises";
 import path from "node:path";
+import { airtableConfigured, persistLeadAirtable } from "@/lib/access/airtable";
 
 export interface AccessLead {
   id: string;
@@ -22,6 +23,7 @@ export const ACCESS_TTL_MS = 30 * DAY_MS;
 function secret(): string {
   return (
     process.env.ACCESS_GATE_SECRET ||
+    process.env.AIRTABLE_API_KEY ||
     process.env.FEEDBACK_WEBHOOK_URL ||
     process.env.EMAIL_CAPTURE_WEBHOOK_URL ||
     "dev-only-access-gate-secret-change-me"
@@ -105,23 +107,33 @@ async function persistLeadUpstash(lead: AccessLead): Promise<void> {
   });
 }
 
-export async function saveLead(lead: Omit<AccessLead, "id" | "createdAt">): Promise<AccessLead> {
-  const full: AccessLead = {
+export async function saveLead(lead: Omit<AccessLead, "id" | "createdAt">): Promise<AccessLead & { airtableRecordId?: string }> {
+  const full: AccessLead & { airtableRecordId?: string } = {
     ...lead,
     id: "lead_" + randomBytes(12).toString("hex"),
     email: lead.email.trim().toLowerCase(),
     createdAt: new Date().toISOString(),
   };
 
+  // Airtable is the durable CRM store. If configured, require a successful write
+  // so we never unlock scanning without saving the lead.
+  if (airtableConfigured()) {
+    const result = await persistLeadAirtable(full);
+    if (!result.ok) {
+      throw new Error(`Could not save your signup to Airtable: ${result.error}`);
+    }
+    full.airtableRecordId = result.recordId;
+  }
+
   try {
     await persistLeadUpstash(full);
   } catch {
-    /* best-effort */
+    /* best-effort backup */
   }
   try {
     await persistLeadLocal(full);
   } catch {
-    /* best-effort in serverless — may fail on read-only FS */
+    /* best-effort in serverless */
   }
 
   const webhook = process.env.LEAD_WEBHOOK_URL || process.env.EMAIL_CAPTURE_WEBHOOK_URL;
@@ -133,7 +145,7 @@ export async function saveLead(lead: Omit<AccessLead, "id" | "createdAt">): Prom
         body: JSON.stringify({ type: "access_lead", ...full }),
       });
     } catch {
-      /* never fail signup on webhook */
+      /* never fail signup on secondary webhook */
     }
   }
 
