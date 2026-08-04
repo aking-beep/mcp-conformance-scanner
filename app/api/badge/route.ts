@@ -52,6 +52,7 @@ function svgBadge(label: string, grade: string, score: number | null) {
  *
  *   /api/badge?url=https://mcp.example.com/mcp
  *   /api/badge?repo=owner/repo
+ *   /api/badge?image=ghcr.io/org/mcp:latest
  *   /api/badge?grade=A&score=94   (static, no scan)
  */
 export async function GET(req: Request) {
@@ -60,17 +61,22 @@ export async function GET(req: Request) {
   const scoreParam = searchParams.get("score");
   const url = searchParams.get("url");
   const repo = searchParams.get("repo");
+  const image = searchParams.get("image");
 
   let grade: Grade | string = "F";
   let score: number | null = null;
 
-  if (gradeParam && !url && !repo) {
+  if (gradeParam && !url && !repo && !image) {
     grade = gradeParam.toUpperCase();
     score = scoreParam != null ? Number(scoreParam) : null;
-  } else if (url || repo) {
+  } else if (url || repo || image) {
     try {
       const report = await runScan(
-        url ? { kind: "endpoint", url } : { kind: "github", repo: repo! },
+        url
+          ? { kind: "endpoint", url }
+          : image
+          ? { kind: "docker", image }
+          : { kind: "github", repo: repo! },
       );
       grade = report.overall.grade;
       score = report.overall.score;
@@ -81,7 +87,7 @@ export async function GET(req: Request) {
   } else {
     return NextResponse.json(
       {
-        error: "Provide ?url=, ?repo=, or ?grade= (optional &score=).",
+        error: "Provide ?url=, ?repo=, ?image=, or ?grade= (optional &score=).",
         example: "/api/badge?url=https://mcp.deepwiki.com/mcp",
       },
       { status: 400 },

@@ -3,6 +3,7 @@
 import { probeMcpEndpoint } from "./client";
 import { runChecks } from "./checks";
 import { buildCompatibility } from "./compatibility";
+import { probeDockerImage, runDockerChecks } from "./docker";
 import { probeGithubRepo, runGithubChecks } from "./github";
 import {
   buildCategoryScores,
@@ -44,33 +45,51 @@ function finalizeReport(
   };
 }
 
+function transportFromHints(
+  hints: Array<"stdio" | "sse" | "streamable-http" | "http">,
+): ScanReport["transport"] {
+  if (hints.includes("streamable-http")) return "streamable-http";
+  if (hints.includes("sse")) return "http+sse";
+  return "unknown";
+}
+
 export async function runScan(target: ScanTarget): Promise<ScanReport> {
   const createdAt = new Date().toISOString();
 
   if (target.kind === "docker") {
-    return {
+    const probe = await probeDockerImage(target.image);
+    const checks = runDockerChecks(probe);
+    const next = finalizeReport({
       id: reportId(),
       createdAt,
-      target,
-      reachable: false,
-      mcpVersion: null,
-      serverInfo: null,
-      transport: "unknown",
-      latencyMs: null,
+      target: { kind: "docker", image: probe.ref?.display || target.image },
+      reachable: probe.reachable,
+      mcpVersion: probe.signals.protocolVersionHint,
+      serverInfo: probe.signals.serverName
+        ? { name: probe.signals.serverName }
+        : probe.reachable && probe.ref
+        ? { name: probe.ref.display }
+        : null,
+      transport: transportFromHints(probe.signals.transportHints),
+      latencyMs: probe.latencyMs,
       counts: { tools: 0, resources: 0, prompts: 0 },
-      categories: [],
-      checks: [],
-      compatibility: [],
-      security: { score: 0, grade: "F" },
-      enterpriseReadiness: 0,
-      documentationScore: 0,
-      overall: { score: 0, grade: "F" },
-      recommendations: [],
-      nextSteps: [
-        "Docker image scanning is on the roadmap — for now, run the image and scan its MCP endpoint URL.",
+      checks,
+      errors: [
+        ...probe.errors,
+        ...(probe.reachable
+          ? [
+              "Docker/OCI metadata scan — live handshake, tools, and error probes need a running endpoint.",
+            ]
+          : []),
       ],
-      errors: ["docker scanning is not yet implemented in this build."],
-    };
+    });
+    if (probe.reachable) {
+      next.nextSteps = [
+        "Run the image and scan its MCP endpoint URL for a full live grade.",
+        ...next.nextSteps.filter((s) => !/run the image|running mcp endpoint/i.test(s)).slice(0, 4),
+      ];
+    }
+    return next;
   }
 
   if (target.kind === "github") {
@@ -87,11 +106,7 @@ export async function runScan(target: ScanTarget): Promise<ScanReport> {
         : probe.reachable
         ? { name: probe.fullName }
         : null,
-      transport: probe.signals.transportHints.includes("streamable-http")
-        ? "streamable-http"
-        : probe.signals.transportHints.includes("sse")
-        ? "http+sse"
-        : "unknown",
+      transport: transportFromHints(probe.signals.transportHints),
       latencyMs: probe.latencyMs,
       counts: {
         tools: probe.signals.toolNames.length,
@@ -109,7 +124,6 @@ export async function runScan(target: ScanTarget): Promise<ScanReport> {
       ],
     });
 
-    // Prefer actionable next steps for static scans
     if (probe.reachable) {
       next.nextSteps = [
         "Scan the running MCP endpoint to validate handshake, errors, and live schemas.",

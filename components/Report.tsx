@@ -107,7 +107,11 @@ export function Report({ report }: { report: ScanReport }) {
         <div className="mt-5 flex flex-wrap gap-2 text-xs text-sub">
           <span className="pill">Transport: {report.transport}</span>
           <span className="pill">
-            {report.target.kind === "github" ? "Scan: static GitHub" : `Latency: ${report.latencyMs ?? "?"}ms`}
+            {report.target.kind === "github"
+              ? "Scan: static GitHub"
+              : report.target.kind === "docker"
+              ? "Scan: Docker/OCI"
+              : `Latency: ${report.latencyMs ?? "?"}ms`}
           </span>
           <span className="pill">{report.counts.tools} tools</span>
           <span className="pill">{report.counts.resources} resources</span>
@@ -116,6 +120,11 @@ export function Report({ report }: { report: ScanReport }) {
         {report.target.kind === "github" && (
           <p className="mt-3 text-xs text-warn">
             Static repository analysis — live handshake, error probes, and schema validation need an endpoint scan.
+          </p>
+        )}
+        {report.target.kind === "docker" && (
+          <p className="mt-3 text-xs text-warn">
+            Image metadata analysis — tools, schemas, and JSON-RPC error probes need a running MCP endpoint.
           </p>
         )}
       </div>

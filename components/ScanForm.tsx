@@ -23,10 +23,16 @@ const TABS: { kind: ScanKind; label: string; placeholder: string; hint: string; 
     kind: "docker",
     label: "Docker image",
     placeholder: "ghcr.io/org/mcp-server:latest",
-    hint: "Pull & inspect a containerized MCP server. On the roadmap.",
-    ready: false,
+    hint: "Inspect image config via the OCI registry API (no daemon required). Follow up with an endpoint scan once the container is running.",
+    ready: true,
   },
 ];
+
+const EXAMPLES: Record<ScanKind, string[]> = {
+  endpoint: ["https://mcp.deepwiki.com/mcp", "https://server.smithery.ai/mcp"],
+  github: ["modelcontextprotocol/servers", "https://github.com/modelcontextprotocol/typescript-sdk"],
+  docker: ["mcp/filesystem:latest", "ghcr.io/github/github-mcp-server:latest"],
+};
 
 export function ScanForm({
   onScan,
@@ -84,37 +90,18 @@ export function ScanForm({
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-sub">
         <span className="text-sub/70">Try:</span>
-        {kind === "github"
-          ? [
-              "modelcontextprotocol/servers",
-              "https://github.com/modelcontextprotocol/typescript-sdk",
-            ].map((ex) => (
-              <button
-                key={ex}
-                onClick={() => {
-                  setKind("github");
-                  setValue(ex);
-                }}
-                className="pill hover:border-brand hover:text-ink font-mono"
-              >
-                {ex}
-              </button>
-            ))
-          : [
-              "https://mcp.deepwiki.com/mcp",
-              "https://server.smithery.ai/mcp",
-            ].map((ex) => (
-              <button
-                key={ex}
-                onClick={() => {
-                  setKind("endpoint");
-                  setValue(ex);
-                }}
-                className="pill hover:border-brand hover:text-ink font-mono"
-              >
-                {ex}
-              </button>
-            ))}
+        {EXAMPLES[kind].map((ex) => (
+          <button
+            key={ex}
+            onClick={() => {
+              setKind(kind);
+              setValue(ex);
+            }}
+            className="pill hover:border-brand hover:text-ink font-mono"
+          >
+            {ex}
+          </button>
+        ))}
       </div>
     </div>
   );

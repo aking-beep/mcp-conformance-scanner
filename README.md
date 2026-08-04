@@ -81,8 +81,8 @@ malformed body to observe error handling. It parses both `application/json` and 
 
 ## Roadmap
 
-Docker image inspection and a GitHub Action for CI gating are next. GitHub repo scanning and the
-conformance badge ship in v0.2. See **/roadmap**.
+A GitHub Action for CI gating is next. Endpoint, GitHub, and Docker scan kinds all ship in v0.3.
+See **/roadmap**.
 
 ## License
 

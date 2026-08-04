@@ -22,6 +22,7 @@ orchestrator, which calls, in order:
    `resources/list` / `prompts/list`, plus an unknown-method probe and a malformed-body
    probe. Parses both `application/json` and `text/event-stream`; carries `Mcp-Session-Id`.
    For `kind: "github"`, `lib/mcp/github.ts` statically inspects the repo via the GitHub API.
+   For `kind: "docker"`, `lib/mcp/docker.ts` inspects the OCI manifest + config (registry API).
 2. `lib/mcp/checks.ts` — `runChecks(probe, url)` → ~20 `CheckResult`s across 9 categories.
 3. `lib/mcp/scoring.ts` — rolls checks into weighted category scores, overall grade
    (weights re-normalize over categories that apply, so absent capabilities don't penalize),
@@ -50,19 +51,21 @@ orchestrator, which calls, in order:
 - DONE: MCP **endpoint** scanning, end to end.
 - DONE: GitHub **repository** static scanning (`kind: "github"`) via GitHub API —
   `lib/mcp/github.ts` (SDK, tools, transport, auth docs, secrets hygiene, README).
-- DONE: Conformance badge at `GET /api/badge?url=` or `?repo=` (or static `?grade=`).
-- STUBBED (honest "on the roadmap" reports, not fake data): `kind: "docker"` in
-  `lib/mcp/scan.ts`. Docker = pull & inspect (needs a container runtime).
+- DONE: Docker / OCI **image** scanning (`kind: "docker"`) via registry API —
+  `lib/mcp/docker.ts` (manifest + config blob; optional local `docker inspect`).
+- DONE: Conformance badge at `GET /api/badge?url=` / `?repo=` / `?image=` (or static `?grade=`).
+- No remaining scan-kind stubs. Next product work: GitHub Action CI gating, deeper OAuth.
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
 - `EMAIL_CAPTURE_WEBHOOK_URL` — enables saving captured emails; unset = no-op.
 - `FEEDBACK_WEBHOOK_URL` — feedback destination; unset = console log.
 - `NEXT_PUBLIC_BASE_URL` — for share links.
-- `GITHUB_TOKEN` — higher GitHub API rate limits / private repos for `kind: "github"`.
+- `GITHUB_TOKEN` — higher GitHub API rate limits / private repos / ghcr.io pulls.
+- `DOCKER_REGISTRY_TOKEN` — bearer token for private OCI registries.
 
 ## Notes for the next change
-- Docker image scanning is the remaining stub.
+- GitHub Action for CI conformance gating is the natural next product surface.
 - Consider pinning/upgrading Next.js past 14.2.5 (security advisory).
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.

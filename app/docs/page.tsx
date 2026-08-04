@@ -36,7 +36,10 @@ Content-Type: application/json
 }
 
 // or static GitHub analysis:
-{ "kind": "github", "repo": "owner/repo" }`}</Code>
+{ "kind": "github", "repo": "owner/repo" }
+
+// or Docker / OCI image metadata:
+{ "kind": "docker", "image": "ghcr.io/org/mcp-server:latest" }`}</Code>
         <p className="text-sub text-sm">Example with curl:</p>
         <Code>{`curl -s https://your-instance.vercel.app/api/scan \\
   -H 'content-type: application/json' \\
@@ -49,7 +52,8 @@ Content-Type: application/json
           Embed a live SVG badge in your README. Caches for 5 minutes.
         </p>
         <Code>{`![MCP conformance](https://your-instance.vercel.app/api/badge?url=https://your-server/mcp)
-![MCP conformance](https://your-instance.vercel.app/api/badge?repo=owner/repo)`}</Code>
+![MCP conformance](https://your-instance.vercel.app/api/badge?repo=owner/repo)
+![MCP conformance](https://your-instance.vercel.app/api/badge?image=ghcr.io/org/mcp:latest)`}</Code>
       </section>
 
       <section className="space-y-3">

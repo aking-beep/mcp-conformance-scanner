@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // Local CLI: npm run scan -- https://your-server/mcp
 //        or: npm run scan -- owner/repo
+//        or: npm run scan -- --docker ghcr.io/org/image:tag
 // Prints a conformance summary to the terminal. Exits non-zero on grade < C.
 
+import { isDockerImageArg } from "../lib/mcp/docker";
 import { parseGithubRepo } from "../lib/mcp/github";
 import { runScan } from "../lib/mcp/scan";
 import type { ScanTarget } from "../lib/mcp/types";
@@ -17,9 +19,37 @@ const statusColor: Record<string, (s: string) => string> = {
 };
 const glyph: Record<string, string> = { pass: "✓", warn: "!", fail: "✗", skip: "–" };
 
-function toTarget(arg: string): ScanTarget {
+function parseArgs(argv: string[]): { kindHint?: "endpoint" | "github" | "docker"; value?: string } {
+  let kindHint: "endpoint" | "github" | "docker" | undefined;
+  const rest: string[] = [];
+  for (const a of argv) {
+    if (a === "--docker" || a === "-d") kindHint = "docker";
+    else if (a === "--github" || a === "-g") kindHint = "github";
+    else if (a === "--endpoint" || a === "-e") kindHint = "endpoint";
+    else if (a === "--help" || a === "-h") {
+      console.log(`Usage: npm run scan -- [--docker|--github|--endpoint] <target>
+
+Targets:
+  https://host/mcp          MCP endpoint (live handshake)
+  owner/repo                GitHub repository (static)
+  name/image:tag            Docker / OCI image (registry metadata)
+`);
+      process.exit(0);
+    } else rest.push(a);
+  }
+  return { kindHint, value: rest[0] };
+}
+
+function toTarget(arg: string, kindHint?: "endpoint" | "github" | "docker"): ScanTarget {
+  if (kindHint === "docker") return { kind: "docker", image: arg };
+  if (kindHint === "github") return { kind: "github", repo: arg };
+  if (kindHint === "endpoint") return { kind: "endpoint", url: arg };
+
   if (/^https?:\/\//i.test(arg) && !/github\.com/i.test(arg)) {
     return { kind: "endpoint", url: arg };
+  }
+  if (isDockerImageArg(arg)) {
+    return { kind: "docker", image: arg };
   }
   if (parseGithubRepo(arg)) {
     return { kind: "github", repo: arg };
@@ -27,16 +57,18 @@ function toTarget(arg: string): ScanTarget {
   if (/^https?:\/\//i.test(arg)) {
     return { kind: "endpoint", url: arg };
   }
+  // Ambiguous user/name with no tag — prefer docker hub style when -- not set?
+  // Default to github for owner/repo; use --docker for hub images without tags.
   return { kind: "endpoint", url: arg };
 }
 
 async function main() {
-  const arg = process.argv[2];
+  const { kindHint, value: arg } = parseArgs(process.argv.slice(2));
   if (!arg) {
-    console.error("Usage: npm run scan -- <mcp-endpoint-url | owner/repo>");
+    console.error("Usage: npm run scan -- [--docker|--github|--endpoint] <target>");
     process.exit(2);
   }
-  const target = toTarget(arg);
+  const target = toTarget(arg, kindHint);
   const label =
     target.kind === "github" ? target.repo : target.kind === "endpoint" ? target.url : target.image;
   console.log(c("36", `\nScanning ${label} (${target.kind}) ...\n`));
@@ -44,7 +76,13 @@ async function main() {
   const r = await runScan(target);
 
   if (!r.reachable) {
-    console.error(c("31", target.kind === "github" ? "Repository not reachable." : "Endpoint not reachable."));
+    const msg =
+      target.kind === "github"
+        ? "Repository not reachable."
+        : target.kind === "docker"
+        ? "Image not reachable."
+        : "Endpoint not reachable.";
+    console.error(c("31", msg));
     r.errors.forEach((e) => console.error("  " + e));
     process.exit(1);
   }

@@ -16,6 +16,7 @@ const COLUMNS: { title: string; tone: string; items: string[] }[] = [
       "Grade, recommendations & shareable JSON report",
       "Public API + local CLI",
       "GitHub repository static scanning",
+      "Docker / OCI image metadata scanning",
       "Conformance badge (SVG) for READMEs",
     ],
   },
@@ -23,6 +24,7 @@ const COLUMNS: { title: string; tone: string; items: string[] }[] = [
     title: "In progress",
     tone: "#f0b23a",
     items: [
+      "GitHub Action for CI conformance gating",
       "Deeper OAuth 2.1 flow validation",
       "Saved reports via optional email capture",
     ],
@@ -31,8 +33,6 @@ const COLUMNS: { title: string; tone: string; items: string[] }[] = [
     title: "Planned",
     tone: "#5b8cff",
     items: [
-      "Docker image pull & inspect",
-      "GitHub Action for CI conformance gating",
       "Historical scans & regression tracking",
       "Community-submitted check rules",
       "Public leaderboard of conformant servers",
