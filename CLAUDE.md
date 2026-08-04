@@ -58,19 +58,22 @@ orchestrator, which calls, in order:
 - DONE: GitHub Action (`action.yml`) + CLI `--min-grade` / `--report` / `--github-output`.
 - DONE: Deeper OAuth 2.1 (`lib/mcp/oauth.ts`) — RFC 9728 PRM, AS metadata, PKCE S256,
   refresh_token grant, Dynamic Client Registration discovery.
-- No remaining scan-kind stubs. Next product work: optional saved reports.
+- DONE: Saved reports (`lib/reports/store.ts`, `/api/reports`, `/r/[id]`) — explicit opt-in
+  only, 30-day TTL, filesystem (dev) or Upstash Redis (prod), optional email webhook.
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
-- `EMAIL_CAPTURE_WEBHOOK_URL` — enables saving captured emails; unset = no-op.
+- `EMAIL_CAPTURE_WEBHOOK_URL` — emails the saved-report link; unset = no email.
 - `FEEDBACK_WEBHOOK_URL` — feedback destination; unset = console log.
-- `NEXT_PUBLIC_BASE_URL` — for share links.
+- `NEXT_PUBLIC_BASE_URL` — for absolute share links.
+- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — production report store.
+- `REPORT_STORE_DIR` — filesystem report store (defaults to `.data/reports` in development).
 - `GITHUB_TOKEN` — higher GitHub API rate limits / private repos / ghcr.io pulls.
 - `DOCKER_REGISTRY_TOKEN` — bearer token for private OCI registries.
 - `MCP_DOCKER_LOCAL` — set to `1` to also run local `docker image inspect`.
 
 ## Notes for the next change
-- Optional saved reports via email capture is the remaining "in progress" item.
+- Planned: historical scans / regression tracking, community check rules, leaderboard.
 - Consider pinning/upgrading Next.js past 14.2.5 (security advisory).
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.

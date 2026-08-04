@@ -20,13 +20,14 @@ const COLUMNS: { title: string; tone: string; items: string[] }[] = [
       "Conformance badge (SVG) for READMEs",
       "GitHub Action for CI grade gating",
       "OAuth 2.1 PRM / AS metadata / PKCE / refresh checks",
+      "Saved reports (opt-in permalink + email)",
     ],
   },
   {
     title: "In progress",
     tone: "#f0b23a",
     items: [
-      "Saved reports via optional email capture",
+      "Community feature requests via feedback / issues",
     ],
   },
   {

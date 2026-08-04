@@ -4,7 +4,7 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 
 **Success metric for v1: 100+ scans.**
 
-## ✅ Shipped (v0.1 → v0.5)
+## ✅ Shipped (v0.1 → v0.6)
 - MCP endpoint scanning over Streamable HTTP (JSON-RPC 2.0)
 - Handshake / version / capabilities validation
 - Tool, resource, and prompt validation
@@ -18,6 +18,7 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 - Claude / OpenAI / Gemini / Bedrock compatibility matrix
 - Recommendations + next steps
 - Shareable JSON report (copy / download / link)
+- Saved reports via explicit opt-in (`/r/[id]`, 30-day TTL, optional email webhook)
 - Public API (`POST /api/scan`) and local CLI (`npm run scan`)
 - GitHub repository static scanning (`kind: "github"`)
 - Docker / OCI image metadata scanning (`kind: "docker"`)
@@ -25,7 +26,7 @@ Built in the open. Suggest or vote via GitHub issues or the in-app feedback butt
 - GitHub Action for CI conformance gating (`action.yml`, `--min-grade`)
 
 ## 🔶 In progress
-- Saved reports via optional email capture
+_(none — suggest features via feedback or GitHub issues)_
 
 ## 🔷 Planned
 - Historical scans + regression tracking

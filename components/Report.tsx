@@ -29,6 +29,9 @@ function findCheck(r: ScanReport, id: string) {
 
 export function Report({ report }: { report: ScanReport }) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [savedUrl, setSavedUrl] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState("");
 
   if (!report.reachable) {
     return (
@@ -69,10 +72,34 @@ export function Report({ report }: { report: ScanReport }) {
     }
   }
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}#${btoa(unescape(encodeURIComponent(JSON.stringify(report)))).slice(0, 12)}`
-      : "";
+  async function savePermalink() {
+    setSaveState("loading");
+    setSaveNote("");
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ report }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      if (!data.stored || !data.url) {
+        setSaveState("error");
+        setSaveNote(data.note || "Report storage isn't configured on this instance.");
+        return;
+      }
+      const abs =
+        data.url.startsWith("http")
+          ? data.url
+          : `${window.location.origin}${data.url}`;
+      setSavedUrl(abs);
+      setSaveState("done");
+      await copy(abs, "saved");
+    } catch (e: any) {
+      setSaveState("error");
+      setSaveNote(e?.message ?? "Could not save report");
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -244,12 +271,33 @@ export function Report({ report }: { report: ScanReport }) {
           >
             Download report
           </button>
-          <button className="btn-ghost" onClick={() => copy(shareUrl, "link")}>
-            {copied === "link" ? "Link copied!" : "Copy share link"}
+          <button
+            className="btn-ghost"
+            onClick={savePermalink}
+            disabled={saveState === "loading"}
+          >
+            {saveState === "loading"
+              ? "Saving…"
+              : copied === "saved"
+              ? "Link copied!"
+              : saveState === "done"
+              ? "Copy saved link again"
+              : "Save & copy link"}
           </button>
         </div>
+        {saveState === "done" && savedUrl && (
+          <p className="mt-3 text-xs text-sub break-all">
+            Permalink (30-day TTL):{" "}
+            <a href={savedUrl} className="text-brand hover:underline font-mono">
+              {savedUrl}
+            </a>
+          </p>
+        )}
+        {saveState === "error" && saveNote && (
+          <p className="mt-3 text-xs text-warn">{saveNote}</p>
+        )}
         <div className="mt-5 border-t border-line pt-5">
-          <EmailCapture reportId={report.id} />
+          <EmailCapture report={report} />
         </div>
       </div>
     </div>

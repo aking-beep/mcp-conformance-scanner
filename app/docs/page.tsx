@@ -97,10 +97,30 @@ npm run scan -- https://your-server.com/mcp`}</Code>
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-xl font-semibold">Saved reports</h2>
+        <p className="text-sub text-sm">
+          Reports are never stored unless you click <b className="text-ink">Save &amp; copy link</b> or
+          submit the optional email form. Permalinks live at <code className="font-mono">/r/&lt;id&gt;</code>{" "}
+          and expire after 30 days.
+        </p>
+        <Code>{`POST /api/reports
+{ "report": { /* full ScanReport */ }, "email": "optional@company.com" }
+
+GET /api/reports/:id
+→ { id, createdAt, expiresAt, report }`}</Code>
+        <p className="text-sub text-sm">
+          Storage backends: Upstash Redis (<code className="font-mono">UPSTASH_REDIS_REST_*</code>) or a
+          filesystem dir (<code className="font-mono">REPORT_STORE_DIR</code>). Dev defaults to{" "}
+          <code className="font-mono">.data/reports</code>.
+        </p>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-xl font-semibold">Privacy</h2>
         <p className="text-sub text-sm">
-          Scans run server-side from your deployment and are not persisted. Email capture is entirely optional and
-          disabled unless you configure <code className="font-mono">EMAIL_CAPTURE_WEBHOOK_URL</code>. Basic scanning is always free.
+          Scans run server-side from your deployment. Results are not persisted unless you explicitly save
+          a report. Email capture is optional and only sends when{" "}
+          <code className="font-mono">EMAIL_CAPTURE_WEBHOOK_URL</code> is set. Basic scanning is always free.
         </p>
       </section>
     </main>

@@ -95,9 +95,27 @@ npm run scan -- --min-grade=B --report report.json https://your-server.com/mcp
 ![MCP conformance](https://your-instance.vercel.app/api/badge?repo=owner/repo)
 ```
 
+## Saved reports
+
+Explicit opt-in only (never auto-stored). In development, reports persist under `.data/reports`.
+In production, set Upstash Redis REST credentials (or `REPORT_STORE_DIR`).
+
+```bash
+# Save
+curl -s localhost:3000/api/reports -H 'content-type: application/json' \
+  -d '{"report":{...}}' 
+# → { "id":"rpt_…", "url":"http://localhost:3000/r/rpt_…" }
+
+# Load
+curl -s localhost:3000/api/reports/rpt_…
+```
+
+Email capture posts the full report + address to `/api/subscribe`, saves when a store is
+configured, and optionally notifies `EMAIL_CAPTURE_WEBHOOK_URL` with the permalink.
+
 ## Roadmap
 
-Optional saved reports via email capture are next. See **/roadmap**.
+Historical scans, community check rules, and a public leaderboard are next. See **/roadmap**.
 
 ## License
 
