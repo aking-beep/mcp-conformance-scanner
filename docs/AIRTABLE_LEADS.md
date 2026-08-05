@@ -9,7 +9,12 @@ Use your Airtable invite email (do **not** paste invite tokens into git or publi
 
 ## 2. Use your `Signups` table (MCP Sign Up base)
 
-You already have Full Name, First Name, Last Name, Email. **Add** these fields:
+**Minimum** (already present): Full Name, First Name, Last Name, Email.
+
+The app writes optional fields when they exist; unknown columns are dropped automatically.
+Company is also appended onto Full Name (`Name · Company`) so it isn’t lost on a minimal table.
+
+Optional columns (exact names):
 
 | Field name           | Type            | Notes                                      |
 |----------------------|-----------------|--------------------------------------------|
@@ -20,7 +25,7 @@ You already have Full Name, First Name, Last Name, Email. **Add** these fields:
 | Contribute Testing   | Checkbox        |                                            |
 | Signed Up At         | Single line text| ISO timestamp from the app                 |
 
-Exact names matter. Default table name in the app is `Signups` (`AIRTABLE_LEADS_TABLE`).
+Default table is `Signups` (or set `AIRTABLE_LEADS_TABLE` to the table id).
 
 ## 3. Create a Personal Access Token
 https://airtable.com/create/tokens

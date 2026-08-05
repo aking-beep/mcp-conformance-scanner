@@ -50,7 +50,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const lead = await saveLead(parsed.data);
+  let lead;
+  try {
+    lead = await saveLead(parsed.data);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Could not save signup.";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
   const token = mintAccessToken(lead.id, lead.email);
 
   return NextResponse.json(

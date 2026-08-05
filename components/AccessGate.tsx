@@ -60,8 +60,15 @@ export function AccessGate({
           contributeTesting,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not continue");
+      const raw = await res.text();
+      let data: { error?: string; token?: string } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as typeof data) : {};
+      } catch {
+        throw new Error(raw?.slice(0, 200) || `Signup failed (HTTP ${res.status}).`);
+      }
+      if (!res.ok) throw new Error(data.error || `Could not continue (HTTP ${res.status})`);
+      if (!data.token) throw new Error("Signup succeeded but no access token was returned.");
       const profile: AccessProfile = {
         token: data.token,
         email,
