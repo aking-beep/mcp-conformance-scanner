@@ -21,13 +21,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const ACCESS_TTL_MS = 30 * DAY_MS;
 
 function secret(): string {
-  return (
-    process.env.ACCESS_GATE_SECRET ||
-    process.env.AIRTABLE_API_KEY ||
-    process.env.FEEDBACK_WEBHOOK_URL ||
-    process.env.EMAIL_CAPTURE_WEBHOOK_URL ||
-    "dev-only-access-gate-secret-change-me"
-  );
+  const s = process.env.ACCESS_GATE_SECRET?.trim();
+  if (s) return s;
+  // Never mint/verify with a public fallback on Vercel / production.
+  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+    throw new Error("ACCESS_GATE_SECRET must be set in production.");
+  }
+  return "dev-only-access-gate-secret-change-me";
 }
 
 function b64url(buf: Buffer | string): string {
@@ -36,8 +36,9 @@ function b64url(buf: Buffer | string): string {
 }
 
 export function accessGateEnabled(): boolean {
-  const v = (process.env.ACCESS_GATE_ENABLED ?? "true").toLowerCase();
-  return v !== "0" && v !== "false" && v !== "off";
+  // Launch default: off — optional email capture lives on save/share.
+  const v = (process.env.ACCESS_GATE_ENABLED ?? "false").toLowerCase();
+  return v === "1" || v === "true" || v === "on";
 }
 
 export function mintAccessToken(leadId: string, email: string): string {

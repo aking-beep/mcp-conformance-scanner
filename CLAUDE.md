@@ -5,7 +5,7 @@ Context for AI agents working in this repo. Read this first.
 ## What this is
 A free developer tool (**ARC Labs 0.1 · Release #1**) that scans an MCP server and grades it on protocol
 compliance, security, and multi-model compatibility (Claude / OpenAI / Gemini / Bedrock).
-Next.js 14 (App Router) + TypeScript + Tailwind. Deploys to Vercel. MIT licensed.
+Next.js 15 (App Router) + TypeScript + Tailwind. Deploys to Vercel. MIT licensed.
 Frozen as a focused Labs utility — no accounts/billing/dashboards. Sister tools are next.
 
 ## Commands
@@ -67,22 +67,20 @@ orchestrator, which calls, in order:
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
-- `ACCESS_GATE_ENABLED` — default true; require signup before scan.
-- `ACCESS_GATE_SECRET` — HMAC secret for access tokens (set in production).
-- `AIRTABLE_API_KEY` + `AIRTABLE_BASE_ID` (+ optional `AIRTABLE_LEADS_TABLE`) — durable leads.
+- `ACCESS_GATE_ENABLED` — default **false** (instant scan). Set `true` to require signup before scan.
+- `ACCESS_GATE_SECRET` — required on Vercel/production if tokens are minted (no hardcoded fallback).
+- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — durable rate limits + report store on Vercel (strongly recommended for launch).
+- `AIRTABLE_API_KEY` + `AIRTABLE_BASE_ID` (+ optional `AIRTABLE_LEADS_TABLE`) — durable leads when gate/capture is used.
 - `LEAD_WEBHOOK_URL` — optional secondary notify; falls back to `EMAIL_CAPTURE_WEBHOOK_URL`.
 - `EMAIL_CAPTURE_WEBHOOK_URL` — emails the saved-report link; unset = no email.
 - `FEEDBACK_WEBHOOK_URL` — feedback destination; unset = console log.
 - `NEXT_PUBLIC_BASE_URL` — for absolute share links.
-- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — production report store / rate limits.
 - `REPORT_STORE_DIR` — filesystem report store (defaults to `.data/reports` in development).
 - `GITHUB_TOKEN` — higher GitHub API rate limits / private repos / ghcr.io pulls.
 - `DOCKER_REGISTRY_TOKEN` — bearer token for private OCI registries.
 - `MCP_DOCKER_LOCAL` — set to `1` to also run local `docker image inspect`.
 
 ## Notes for the next change
-- Production launch checklist: Airtable PAT + base ID, `ACCESS_GATE_SECRET`,
-  `NEXT_PUBLIC_BASE_URL`. See `docs/AIRTABLE_LEADS.md`.
-- Consider upgrading Next.js past 14.2.5 (security advisory).
+- Launch checklist: `ACCESS_GATE_ENABLED=false`, `ACCESS_GATE_SECRET` set, Upstash REST URL+token, `NEXT_PUBLIC_BASE_URL`.
 - Every ARC Labs tool should keep: modern UI, GitHub repo, API, docs, public roadmap,
   feedback button, shareable report, optional email capture. Preserve these when editing.

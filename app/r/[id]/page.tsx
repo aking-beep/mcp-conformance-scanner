@@ -2,20 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Report } from "@/components/Report";
 import type { ScanReport } from "@/lib/mcp/types";
 
-export default function SavedReportPage({ params }: { params: { id: string } }) {
+export default function SavedReportPage() {
+  const params = useParams<{ id: string }>();
+  const id = typeof params?.id === "string" ? params.id : "";
   const [report, setReport] = useState<ScanReport | null>(null);
   const [meta, setMeta] = useState<{ createdAt?: string; expiresAt?: string }>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/reports/${encodeURIComponent(params.id)}`);
+        const res = await fetch(`/api/reports/${encodeURIComponent(id)}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Not found");
         if (!cancelled) {
@@ -31,7 +35,7 @@ export default function SavedReportPage({ params }: { params: { id: string } }) 
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [id]);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 md:py-14">
@@ -70,7 +74,7 @@ export default function SavedReportPage({ params }: { params: { id: string } }) 
             Saved {meta.createdAt ? new Date(meta.createdAt).toLocaleString() : ""}
             {meta.expiresAt ? ` · expires ${new Date(meta.expiresAt).toLocaleDateString()}` : ""}
             {" · "}
-            <span className="font-mono">{params.id}</span>
+            <span className="font-mono">{id}</span>
           </div>
           <Report report={report} />
         </>

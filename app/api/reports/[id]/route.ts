@@ -5,9 +5,10 @@ export const runtime = "nodejs";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } },
+  ctx: { params: Promise<{ id: string }> },
 ) {
-  const stored = await loadReport(params.id);
+  const { id } = await ctx.params;
+  const stored = await loadReport(id);
   if (!stored) {
     return NextResponse.json({ error: "Report not found or expired." }, { status: 404 });
   }

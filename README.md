@@ -123,7 +123,8 @@ remediation copy and spec references. Please don’t open PRs for accounts, bill
 
 - **GitHub / Docker scans are static** — they don’t run a live MCP handshake. Use an endpoint scan for full grades.
 - **Compatibility is an estimate** based on observed capabilities, not a guarantee from each vendor.
-- **Public demo rate-limits** requests and may ask for a short signup (not a password account).
+- **Public demo rate-limits** requests (durable only when Upstash Redis is configured).
+- **Email capture is optional** — on save/share of a report, not required to scan.
 - **Saved permalinks** require a configured store; without it, JSON/Markdown export still works.
 - **SSRF protections** block scanning private/link-local addresses from the hosted app.
 - Spec URLs in recommendations track current MCP docs and may lag new revisions.

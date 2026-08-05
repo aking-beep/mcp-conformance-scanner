@@ -60,6 +60,15 @@ export async function rateLimit(
   } catch {
     /* fall through */
   }
+  if ((process.env.VERCEL || process.env.NODE_ENV === "production") && !process.env.UPSTASH_REDIS_REST_URL) {
+    // Once per isolate — in-memory limits reset on every cold start without Upstash.
+    if (!(globalThis as { __mcpRlWarned?: boolean }).__mcpRlWarned) {
+      (globalThis as { __mcpRlWarned?: boolean }).__mcpRlWarned = true;
+      console.warn(
+        "[ratelimit] UPSTASH_REDIS_REST_URL/TOKEN unset — using per-isolate memory (weak on Vercel).",
+      );
+    }
+  }
   return memLimit(key, limit, windowMs);
 }
 
