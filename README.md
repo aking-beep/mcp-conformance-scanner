@@ -8,10 +8,10 @@ Scan any [Model Context Protocol](https://modelcontextprotocol.io) server and ge
 score (0–100), letter grade, security gauges, model compatibility, and **actionable** fixes
 you can paste into a GitHub issue.
 
-Live: https://mcp-conformance-scanner.vercel.app
+Live: https://arctransformationgrouplab.dev
 
 ```markdown
-![MCP conformance](https://mcp-conformance-scanner.vercel.app/api/badge?grade=A&score=93)
+![MCP conformance](https://arctransformationgrouplab.dev/api/badge?grade=A&score=93)
 ```
 
 ---
@@ -81,9 +81,9 @@ Copy Markdown from the report footer to paste into issues or PRs.
 ## Conformance badge
 
 ```markdown
-![MCP conformance](https://mcp-conformance-scanner.vercel.app/api/badge?url=https://your-server/mcp)
-![MCP conformance](https://mcp-conformance-scanner.vercel.app/api/badge?repo=owner/repo)
-![MCP conformance](https://mcp-conformance-scanner.vercel.app/api/badge?grade=A&score=93)
+![MCP conformance](https://arctransformationgrouplab.dev/api/badge?url=https://your-server/mcp)
+![MCP conformance](https://arctransformationgrouplab.dev/api/badge?repo=owner/repo)
+![MCP conformance](https://arctransformationgrouplab.dev/api/badge?grade=A&score=93)
 ```
 
 ## GitHub Action
@@ -108,7 +108,7 @@ This scanner is **frozen** as ARC Labs Release #1.
 
 **Coming soon (sister tools):** Prompt Reviewer · Prompt Injection Scanner · AI Security Scanner · Architecture Generator.
 
-See [ROADMAP.md](./ROADMAP.md) and the live [/roadmap](https://mcp-conformance-scanner.vercel.app/roadmap) page.
+See [ROADMAP.md](./ROADMAP.md) and the live [/roadmap](https://arctransformationgrouplab.dev/roadmap) page.
 
 ---
 

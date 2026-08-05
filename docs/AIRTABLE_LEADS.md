@@ -44,7 +44,7 @@ AIRTABLE_API_KEY=pat...
 AIRTABLE_BASE_ID=app...
 AIRTABLE_LEADS_TABLE=Signups
 ACCESS_GATE_SECRET=<long random string>
-NEXT_PUBLIC_BASE_URL=https://mcp-conformance-scanner.vercel.app
+NEXT_PUBLIC_BASE_URL=https://arctransformationgrouplab.dev
 ```
 
 Redeploy after saving env vars.
