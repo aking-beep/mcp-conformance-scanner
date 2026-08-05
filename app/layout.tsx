@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MCP Conformance Scanner — grade any MCP server",
+  title: "ARC Labs 0.1 — MCP Conformance Scanner",
   description:
-    "Free tool to scan an MCP server for protocol compliance, security, and Claude/OpenAI/Gemini/Bedrock compatibility. Get a grade, recommendations, and a shareable report.",
+    "Free open-source tool to scan an MCP server for protocol compliance, security, and Claude/OpenAI/Gemini/Bedrock compatibility. Overall score, actionable fixes, Markdown export.",
   openGraph: {
-    title: "MCP Conformance Scanner",
+    title: "ARC Labs 0.1 — MCP Conformance Scanner",
     description:
-      "Grade any MCP server on protocol compliance, security, and multi-model compatibility. Free.",
+      "Free · Open Source · Community Project. Grade any MCP server — score, fixes, shareable report.",
     type: "website",
   },
 };

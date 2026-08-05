@@ -89,12 +89,14 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 md:py-14">
       <header className="flex items-center justify-between mb-10">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg grid place-items-center font-bold text-white" style={{ background: "linear-gradient(135deg,#6b97ff,#7c5cff)" }}>M</div>
-          <span className="font-semibold">MCP Conformance Scanner</span>
-          <span className="pill text-sub ml-1">by ARC Labs</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="h-8 w-8 rounded-lg grid place-items-center font-bold text-white shrink-0" style={{ background: "linear-gradient(135deg,#6b97ff,#7c5cff)" }}>M</div>
+          <div className="min-w-0">
+            <div className="font-semibold truncate">MCP Conformance Scanner</div>
+            <div className="text-[11px] text-sub">ARC Labs 0.1 · Release #1</div>
+          </div>
         </div>
-        <nav className="flex items-center gap-4 text-sm text-sub">
+        <nav className="flex items-center gap-4 text-sm text-sub shrink-0">
           <Link href="/docs" className="hover:text-ink">Docs</Link>
           <Link href="/roadmap" className="hover:text-ink">Roadmap</Link>
           <a href="https://github.com/aking-beep/mcp-conformance-scanner" className="hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
@@ -102,12 +104,16 @@ export default function Home() {
       </header>
 
       <section className="text-center mb-8">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+          <span className="pill">Free · Open Source · Community Project</span>
+          <span className="pill">ARC Labs 0.1</span>
+        </div>
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
           Is your <span style={{ color: "#7c5cff" }}>MCP server</span> ready?
         </h1>
         <p className="mt-3 text-sub max-w-2xl mx-auto">
           Scan any MCP server for protocol compliance, security, and Claude / OpenAI / Gemini / Bedrock
-          compatibility. Get a grade, prioritized fixes, and a shareable report — free.
+          compatibility. Get a grade, actionable fixes, and a shareable report — free.
         </p>
       </section>
 
@@ -171,7 +177,7 @@ export default function Home() {
       )}
 
       <footer className="mt-16 pt-8 border-t border-line text-sm text-sub flex flex-wrap items-center justify-between gap-3">
-        <span>© {new Date().getFullYear()} ARC Labs · MIT licensed · Free forever for basic scans</span>
+        <span>© {new Date().getFullYear()} ARC Labs · MIT · Free forever · Community project</span>
         <div className="flex gap-4">
           <Link href="/docs" className="hover:text-ink">API docs</Link>
           <Link href="/roadmap" className="hover:text-ink">Public roadmap</Link>

@@ -3,9 +3,10 @@
 Context for AI agents working in this repo. Read this first.
 
 ## What this is
-A free developer tool (ARC Labs) that scans an MCP server and grades it on protocol
+A free developer tool (**ARC Labs 0.1 · Release #1**) that scans an MCP server and grades it on protocol
 compliance, security, and multi-model compatibility (Claude / OpenAI / Gemini / Bedrock).
 Next.js 14 (App Router) + TypeScript + Tailwind. Deploys to Vercel. MIT licensed.
+Frozen as a focused Labs utility — no accounts/billing/dashboards. Sister tools are next.
 
 ## Commands
 - `npm install` — install deps
@@ -25,10 +26,11 @@ orchestrator, which calls, in order:
    For `kind: "github"`, `lib/mcp/github.ts` statically inspects the repo via the GitHub API.
    For `kind: "docker"`, `lib/mcp/docker.ts` inspects the OCI manifest + config (registry API).
 2. `lib/mcp/checks.ts` — `runChecks(probe, url)` → ~20+ `CheckResult`s across 9 categories.
-3. `lib/mcp/scoring.ts` — rolls checks into weighted category scores, overall grade
-   (weights re-normalize over categories that apply, so absent capabilities don't penalize),
-   plus security / enterprise-readiness / documentation scores, recommendations, next steps.
+3. `lib/mcp/scoring.ts` + `lib/mcp/remediation.ts` — category scores, overall grade,
+   plus security / enterprise / docs scores, structured recommendations
+   (issue / why / fix / reference), next steps.
 4. `lib/mcp/compatibility.ts` — estimates Claude/OpenAI/Gemini/Bedrock fit from the checks.
+5. `lib/mcp/markdown.ts` — Markdown export for GitHub issues/PRs.
 
 `lib/mcp/types.ts` holds all shared types — start there to understand the shapes.
 `ScanReport` is the single object the API returns and the UI renders.

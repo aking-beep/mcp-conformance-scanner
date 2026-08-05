@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ScanReport } from "@/lib/mcp/types";
+import { reportToMarkdown } from "@/lib/mcp/markdown";
 import { EmailCapture } from "./EmailCapture";
 import { Gauge, GradeBadge, ScoreBar, StatusChip, colorForScore, statusMeta } from "./visuals";
 
@@ -54,7 +55,6 @@ export function Report({ report }: { report: ScanReport }) {
     );
   }
 
-  // Build the headline quick-scan chips (mirrors the product spec).
   const chip = (id: string, label: string, fallback: string) => {
     const c = findCheck(report, id);
     if (c?.status === "skip") return null;
@@ -70,6 +70,16 @@ export function Report({ report }: { report: ScanReport }) {
     } catch {
       /* ignore */
     }
+  }
+
+  function download(filename: string, body: string, type: string) {
+    const blob = new Blob([body], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function savePermalink() {
@@ -101,6 +111,8 @@ export function Report({ report }: { report: ScanReport }) {
     }
   }
 
+  const md = reportToMarkdown(report);
+
   return (
     <div className="space-y-6">
       {/* Headline */}
@@ -109,8 +121,11 @@ export function Report({ report }: { report: ScanReport }) {
           <div className="flex items-center gap-5">
             <GradeBadge grade={report.overall.grade} />
             <div>
-              <div className="text-xs uppercase tracking-wide text-sub">Overall grade</div>
-              <div className="text-2xl font-bold">{report.overall.score}/100</div>
+              <div className="text-xs uppercase tracking-wide text-sub">Overall</div>
+              <div className="text-3xl font-bold tracking-tight">{report.overall.score} / 100</div>
+              <div className="text-lg font-semibold mt-0.5" style={{ color: colorForScore(report.overall.score) }}>
+                Grade {report.overall.grade}
+              </div>
               <div className="text-sm text-sub mt-1">
                 {report.serverInfo?.name ?? "MCP server"}
                 {report.serverInfo?.version ? ` v${report.serverInfo.version}` : ""}
@@ -225,14 +240,41 @@ export function Report({ report }: { report: ScanReport }) {
       {/* Recommendations */}
       {report.recommendations.length > 0 && (
         <div className="card p-5">
-          <h3 className="font-semibold mb-4">Recommendations</h3>
-          <div className="space-y-2.5">
+          <h3 className="font-semibold mb-1">Recommendations</h3>
+          <p className="text-sm text-sub mb-4">Issue → why it matters → suggested fix → reference.</p>
+          <div className="space-y-3">
             {report.recommendations.map((rec, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl border border-line p-3 bg-panel2/40">
-                <StatusChip status={rec.priority === "high" ? "fail" : rec.priority === "medium" ? "warn" : "pass"} text={rec.priority} />
-                <div>
-                  <div className="text-sm font-medium">{rec.title}</div>
-                  <div className="text-sm text-sub">{rec.detail}</div>
+              <div key={i} className="rounded-xl border border-line p-4 bg-panel2/40 space-y-3">
+                <div className="flex items-start gap-3">
+                  <StatusChip status={rec.priority === "high" ? "fail" : rec.priority === "medium" ? "warn" : "pass"} text={rec.priority} />
+                  <div className="text-sm font-semibold">{rec.title}</div>
+                </div>
+                <div className="grid gap-2.5 text-sm pl-0 sm:pl-1">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-sub">Issue</div>
+                    <p className="text-ink/90 mt-0.5">{rec.issue}</p>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-sub">Why it matters</div>
+                    <p className="text-sub mt-0.5">{rec.why}</p>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-sub">Suggested fix</div>
+                    <p className="text-ink/90 mt-0.5">{rec.fix}</p>
+                  </div>
+                  {rec.reference && (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-sub">Reference</div>
+                      <a
+                        href={rec.reference}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand hover:underline break-all text-xs mt-0.5 inline-block"
+                      >
+                        {rec.reference}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -254,22 +296,25 @@ export function Report({ report }: { report: ScanReport }) {
       <div className="card p-5">
         <h3 className="font-semibold mb-3">Share this report</h3>
         <div className="flex flex-wrap gap-2">
+          <button className="btn-ghost" onClick={() => copy(md, "md")}>
+            {copied === "md" ? "Copied!" : "Copy Markdown"}
+          </button>
           <button className="btn-ghost" onClick={() => copy(JSON.stringify(report, null, 2), "json")}>
-            {copied === "json" ? "Copied!" : "Copy JSON"}
+            {copied === "json" ? "Copied!" : "Export JSON"}
           </button>
           <button
             className="btn-ghost"
-            onClick={() => {
-              const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `mcp-report-${report.id}.json`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
+            onClick={() => download(`mcp-report-${report.id}.md`, md, "text/markdown")}
           >
-            Download report
+            Download Markdown
+          </button>
+          <button
+            className="btn-ghost"
+            onClick={() =>
+              download(`mcp-report-${report.id}.json`, JSON.stringify(report, null, 2), "application/json")
+            }
+          >
+            Download Report
           </button>
           <button
             className="btn-ghost"

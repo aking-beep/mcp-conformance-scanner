@@ -55,8 +55,19 @@ export interface CompatibilityRow {
 
 export interface Recommendation {
   priority: "high" | "medium" | "low";
+  /** Check label — kept for older consumers. */
   title: string;
+  /** @deprecated Prefer `fix`; kept for older consumers. */
   detail: string;
+  /** Short statement of what is wrong. */
+  issue: string;
+  /** Why this matters for clients / security. */
+  why: string;
+  /** Concrete remediation. */
+  fix: string;
+  /** Spec or docs URL. */
+  reference?: string;
+  checkId?: string;
 }
 
 export interface ScanReport {

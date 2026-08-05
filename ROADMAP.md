@@ -1,38 +1,41 @@
 # Public Roadmap — MCP Conformance Scanner
 
-Built in the open. Suggest or vote via GitHub issues or the in-app feedback button.
+**ARC Labs 0.1 · Release #1** — frozen as a focused Labs utility.
 
-**Success metric for v1: 100+ scans.**
+Success metric for this release: **100+ scans**.
 
-## ✅ Shipped (v0.1 → v0.6)
+## ✅ Shipped (ARC Labs 0.1)
 - MCP endpoint scanning over Streamable HTTP (JSON-RPC 2.0)
 - Handshake / version / capabilities validation
 - Tool, resource, and prompt validation
 - Error-handling probes (unknown method, malformed input)
-- Authentication review (enforcement + OAuth/bearer discovery)
-- Deeper OAuth 2.1 validation (PRM, AS metadata, PKCE S256, refresh_token, DCR)
+- Authentication review + OAuth 2.1 (PRM, AS metadata, PKCE S256, refresh_token, DCR)
 - Security checks (TLS, CORS, prompt-injection surface, destructive-tool guardrails)
 - Streaming (SSE) detection
 - Documentation scoring
-- Overall readiness grade + security + enterprise-readiness scores
+- Overall score /100 + letter grade
 - Claude / OpenAI / Gemini / Bedrock compatibility matrix
-- Recommendations + next steps
-- Shareable JSON report (copy / download / link)
-- Saved reports via explicit opt-in (`/r/[id]`, 30-day TTL, optional email webhook)
+- Actionable recommendations (issue / why it matters / suggested fix / reference)
+- Export Markdown + JSON · download · opt-in permalink (`/r/[id]`)
 - Public API (`POST /api/scan`) and local CLI (`npm run scan`)
-- GitHub repository static scanning (`kind: "github"`)
-- Docker / OCI image metadata scanning (`kind: "docker"`)
-- Conformance badge SVG (`GET /api/badge?url=` / `?repo=` / `?image=`)
+- GitHub repository static scanning · Docker / OCI metadata scanning
+- Conformance badge SVG (`GET /api/badge`)
 - GitHub Action for CI conformance gating (`action.yml`, `--min-grade`)
 
-## 🔶 In progress
-_(none — suggest features via feedback or GitHub issues)_
+## 🔜 Coming soon — ARC Labs suite
+- Prompt Reviewer
+- Prompt Injection Scanner
+- AI Security Scanner
+- Architecture Generator
 
-## 🔷 Planned
-- Historical scans + regression tracking
-- Community-submitted check rules
-- Public leaderboard of conformant MCP servers
+## ❌ Intentionally not building (on this scanner)
+- User accounts / teams
+- Billing
+- Dashboards / product analytics
+- AI chat
+- Complex multi-page report builders
 
 ## Non-goals
 - Storing scan results without explicit opt-in
 - Paywalling basic scanning — it stays free
+- Turning this into the ARC Platform (separate vision, separate products)

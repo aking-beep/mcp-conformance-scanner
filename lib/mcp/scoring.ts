@@ -8,6 +8,7 @@ import type {
   Grade,
   Recommendation,
 } from "./types";
+import { remediationFor } from "./remediation";
 
 const CATEGORY_META: Record<CheckCategory, { label: string; weight: number }> = {
   protocol: { label: "Protocol compliance", weight: 22 },
@@ -101,16 +102,25 @@ export function buildRecommendations(checks: CheckResult[]): Recommendation[] {
     docs: "low",
   };
   return checks
-    .filter((c) => (c.status === "fail" || c.status === "warn") && c.fix)
+    .filter((c) => c.status === "fail" || c.status === "warn")
     .sort((a, b) => {
       const rank = { fail: 0, warn: 1, pass: 2, skip: 3 };
       return rank[a.status] - rank[b.status];
     })
-    .map((c) => ({
-      priority: c.status === "fail" ? "high" : priorityForCategory[c.category],
-      title: c.label,
-      detail: c.fix as string,
-    }))
+    .map((c) => {
+      const rem = remediationFor(c.id, c.category, c.detail, c.fix);
+      const issue = c.detail;
+      return {
+        priority: c.status === "fail" ? "high" : priorityForCategory[c.category],
+        title: c.label,
+        detail: rem.fix,
+        issue,
+        why: rem.why,
+        fix: rem.fix,
+        reference: rem.reference,
+        checkId: c.id,
+      } satisfies Recommendation;
+    })
     .sort((a, b) => {
       const p = { high: 0, medium: 1, low: 2 };
       return p[a.priority] - p[b.priority];

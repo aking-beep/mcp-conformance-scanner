@@ -25,9 +25,12 @@ function svgBadge(label: string, grade: string, score: number | null) {
   // Sanitize grade/score for SVG text (no angle brackets)
   const safeGrade = String(grade).replace(/[<>&"']/g, "").slice(0, 8);
   const color = GRADE_COLORS[safeGrade] ?? "#94a3b8";
-  const right = score != null && Number.isFinite(score) ? `${safeGrade} ${Math.round(score)}` : safeGrade;
+  const right =
+    score != null && Number.isFinite(score)
+      ? `${safeGrade} ${Math.round(score)}/100`
+      : safeGrade;
   const leftW = 118;
-  const rightW = 54 + (score != null ? 18 : 0);
+  const rightW = score != null ? 78 : 44;
   const w = leftW + rightW;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="20" role="img" aria-label="${label}: ${right}">
