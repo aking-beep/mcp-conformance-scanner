@@ -9,6 +9,8 @@ const Schema = z.object({
   email: z.string().email(),
   reportId: z.string().optional(),
   report: z.record(z.unknown()).optional(),
+  updates: z.boolean().optional(),
+  source: z.string().max(80).optional(),
 });
 
 // Optional email capture + saved report. Basic scanning ALWAYS works without this.
@@ -25,7 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
 
-  const { email, reportId } = parsed.data;
+  const { email, reportId, updates, source } = parsed.data;
   const report = parsed.data.report as ScanReport | undefined;
 
   let saved: { id: string; url: string; store: string } | null = null;
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
   }
 
   const permalink = saved?.url || (reportId ? reportPermalink(reportId) : undefined);
-  const webhook = process.env.EMAIL_CAPTURE_WEBHOOK_URL;
+  const webhook = process.env.EMAIL_CAPTURE_WEBHOOK_URL || process.env.LEAD_WEBHOOK_URL;
 
   if (!webhook) {
     return NextResponse.json({
@@ -59,7 +61,10 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
+        type: "report_email_capture",
         email,
+        updates: updates ?? true,
+        source: source || "report_capture",
         reportId: saved?.id || reportId,
         url: permalink,
         grade: report?.overall?.grade,

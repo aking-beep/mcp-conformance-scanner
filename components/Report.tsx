@@ -292,9 +292,15 @@ export function Report({ report }: { report: ScanReport }) {
         </div>
       )}
 
-      {/* Share + save */}
+      {/* Lead capture at the valuable moment — after they've seen the grade */}
+      <div className="card p-5 md:p-6 animate-fade-up">
+        <EmailCapture report={report} />
+      </div>
+
+      {/* Share + export */}
       <div className="card p-5">
-        <h3 className="font-semibold mb-3">Share this report</h3>
+        <h3 className="font-semibold mb-1">Export & share</h3>
+        <p className="text-sm text-sub mb-3">No email needed — copy Markdown for issues/PRs or download the raw report.</p>
         <div className="flex flex-wrap gap-2">
           <button className="btn-ghost" onClick={() => copy(md, "md")}>
             {copied === "md" ? "Copied!" : "Copy Markdown"}
@@ -341,9 +347,6 @@ export function Report({ report }: { report: ScanReport }) {
         {saveState === "error" && saveNote && (
           <p className="mt-3 text-xs text-warn">{saveNote}</p>
         )}
-        <div className="mt-5 border-t border-line pt-5">
-          <EmailCapture report={report} />
-        </div>
       </div>
     </div>
   );
