@@ -67,7 +67,7 @@ orchestrator, which calls, in order:
 - Roadmap lives in `ROADMAP.md` and `/roadmap`.
 
 ## Env (all optional — scanning works with none set)
-- `ACCESS_GATE_ENABLED` — default **false** (instant scan). Set `true` to require signup before scan.
+- `ACCESS_GATE_ENABLED` — default **true**. Form is open; hitting Scan requires a one-time signup before the report.
 - `ACCESS_GATE_SECRET` — required on Vercel/production if tokens are minted (no hardcoded fallback).
 - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — durable rate limits + report store on Vercel (strongly recommended for launch).
 - `AIRTABLE_API_KEY` + `AIRTABLE_BASE_ID` (+ optional `AIRTABLE_LEADS_TABLE`) — durable leads when gate/capture is used.

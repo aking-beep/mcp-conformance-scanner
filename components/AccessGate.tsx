@@ -85,10 +85,10 @@ export function AccessGate({
 
   return (
     <div className="card p-5 md:p-6">
-      <h2 className="text-lg font-semibold">Before you scan</h2>
+      <h2 className="text-lg font-semibold">Unlock your scan report</h2>
       <p className="text-sm text-sub mt-1.5">
-        Free forever. Tell us who you are so ARC Labs can follow up, invite testers, and improve the tool.
-        Scanning unlocks after this one-time step.
+        You give us a bit about yourself — we give you the grade and fixes. One-time step; free forever.
+        Newsletter and testing opt-in are optional.
       </p>
 
       <form onSubmit={submit} className="mt-5 space-y-4">
@@ -151,7 +151,7 @@ export function AccessGate({
         {error && <p className="text-sm text-bad">{error}</p>}
 
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={loading}>
-          {loading ? "Unlocking…" : "Continue to free scanner"}
+          {loading ? "Unlocking…" : "Continue to my report"}
         </button>
 
         <p className="text-[11px] text-sub">

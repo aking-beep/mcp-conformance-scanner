@@ -36,9 +36,9 @@ function b64url(buf: Buffer | string): string {
 }
 
 export function accessGateEnabled(): boolean {
-  // Launch default: off — optional email capture lives on save/share.
-  const v = (process.env.ACCESS_GATE_ENABLED ?? "false").toLowerCase();
-  return v === "1" || v === "true" || v === "on";
+  // On by default: unlock reports after a one-time signup when the user hits Scan.
+  const v = (process.env.ACCESS_GATE_ENABLED ?? "true").toLowerCase();
+  return v !== "0" && v !== "false" && v !== "off";
 }
 
 export function mintAccessToken(leadId: string, email: string): string {

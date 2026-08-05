@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AccessGate, loadStoredAccess, type AccessProfile } from "@/components/AccessGate";
 import { ScanForm, type ScanKind } from "@/components/ScanForm";
@@ -19,13 +19,22 @@ const FEATURES = [
   ["Model compatibility", "Estimates fit for Claude, OpenAI, Gemini, and Bedrock."],
 ];
 
+type PendingScan = { kind: ScanKind; value: string };
+
 export default function Home() {
   const [access, setAccess] = useState<AccessProfile | null>(null);
   const [gateReady, setGateReady] = useState(false);
   const [gateRequired, setGateRequired] = useState(true);
+  const [showGate, setShowGate] = useState(false);
+  const [pendingScan, setPendingScan] = useState<PendingScan | null>(null);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<ScanReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const accessRef = useRef<AccessProfile | null>(null);
+
+  useEffect(() => {
+    accessRef.current = access;
+  }, [access]);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,9 +49,10 @@ export default function Home() {
         setGateRequired(!!data.required);
         if (!data.required) {
           setAccess(stored ?? { token: "", email: "", firstName: "" });
+        } else if (data.unlocked && stored) {
+          setAccess(stored);
         } else if (data.unlocked) {
-          // Cookie and/or stored token already valid
-          setAccess(stored ?? { token: "", email: data.email || "", firstName: "" });
+          setAccess({ token: "", email: data.email || "", firstName: "" });
         }
       } catch {
         if (!cancelled && stored) setAccess(stored);
@@ -55,10 +65,20 @@ export default function Home() {
     };
   }, []);
 
-  async function scan(kind: ScanKind, value: string) {
+  function resetHome() {
+    setReport(null);
+    setError(null);
+    setLoading(false);
+    setShowGate(false);
+    setPendingScan(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function runScan(kind: ScanKind, value: string, profile: AccessProfile | null) {
     setLoading(true);
     setError(null);
     setReport(null);
+    setShowGate(false);
     try {
       const body =
         kind === "endpoint" ? { kind, url: value } : kind === "github" ? { kind, repo: value } : { kind, image: value };
@@ -66,16 +86,20 @@ export default function Home() {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          ...(access?.token ? { authorization: `Bearer ${access.token}` } : {}),
+          ...(profile?.token ? { authorization: `Bearer ${profile.token}` } : {}),
         },
         body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.status === 401 && data.code === "access_required") {
         setAccess(null);
-        throw new Error("Please complete the short signup to continue.");
+        setPendingScan({ kind, value });
+        setShowGate(true);
+        setError(null);
+        return;
       }
       if (!res.ok) throw new Error(data.error || "Scan failed");
+      setPendingScan(null);
       setReport(data as ScanReport);
     } catch (e: any) {
       setError(e?.message ?? "Scan failed");
@@ -84,18 +108,51 @@ export default function Home() {
     }
   }
 
-  const unlocked = !gateRequired || access !== null;
+  function onScan(kind: ScanKind, value: string) {
+    const needsGate = gateRequired && !accessRef.current?.token;
+    if (needsGate) {
+      setPendingScan({ kind, value });
+      setShowGate(true);
+      setReport(null);
+      setError(null);
+      // Scroll gate into view after paint
+      requestAnimationFrame(() => {
+        document.getElementById("scan-gate")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return;
+    }
+    void runScan(kind, value, accessRef.current);
+  }
+
+  function onUnlocked(profile: AccessProfile) {
+    setAccess(profile);
+    setShowGate(false);
+    const pending = pendingScan;
+    if (pending) {
+      void runScan(pending.kind, pending.value, profile);
+    }
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 md:py-14">
       <header className="flex items-center justify-between mb-10">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-8 w-8 rounded-lg grid place-items-center font-bold text-white shrink-0" style={{ background: "linear-gradient(135deg,#6b97ff,#7c5cff)" }}>M</div>
+        <button
+          type="button"
+          onClick={resetHome}
+          className="flex items-center gap-2.5 min-w-0 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+          aria-label="MCP Conformance Scanner — back to start"
+        >
+          <div
+            className="h-8 w-8 rounded-lg grid place-items-center font-bold text-white shrink-0"
+            style={{ background: "linear-gradient(135deg,#6b97ff,#7c5cff)" }}
+          >
+            M
+          </div>
           <div className="min-w-0">
             <div className="font-semibold truncate">MCP Conformance Scanner</div>
             <div className="text-[11px] text-sub">ARC Labs 0.1 · Release #1</div>
           </div>
-        </div>
+        </button>
         <nav className="flex items-center gap-4 text-sm text-sub shrink-0">
           <Link href="/docs" className="hover:text-ink">Docs</Link>
           <Link href="/roadmap" className="hover:text-ink">Roadmap</Link>
@@ -112,8 +169,8 @@ export default function Home() {
           Is your <span style={{ color: "#7c5cff" }}>MCP server</span> ready?
         </h1>
         <p className="mt-3 text-sub max-w-2xl mx-auto">
-          Scan any MCP server for protocol compliance, security, and Claude / OpenAI / Gemini / Bedrock
-          compatibility. Get a grade, actionable fixes, and a shareable report — free.
+          Paste an endpoint, GitHub repo, or Docker image. Hit Scan — tell us who you are once,
+          then we return your grade and fixes.
         </p>
       </section>
 
@@ -121,19 +178,21 @@ export default function Home() {
         <div className="card p-5 text-sm text-sub">Loading…</div>
       )}
 
-      {gateReady && !unlocked && (
-        <AccessGate onUnlocked={setAccess} />
-      )}
-
-      {gateReady && unlocked && (
+      {gateReady && (
         <>
-          {access?.firstName && (
+          {access?.firstName && access.token && (
             <p className="text-xs text-sub mb-3">
               Signed in as {access.firstName} ({access.email}). Free scans are rate-limited to protect the service.
             </p>
           )}
-          <ScanForm onScan={scan} loading={loading} />
+          <ScanForm onScan={onScan} loading={loading || showGate} />
         </>
+      )}
+
+      {showGate && gateReady && (
+        <div id="scan-gate" className="mt-6">
+          <AccessGate onUnlocked={onUnlocked} />
+        </div>
       )}
 
       {loading && (
@@ -149,20 +208,20 @@ export default function Home() {
         </div>
       )}
 
-      {error && !loading && (
+      {error && !loading && !showGate && (
         <div className="card p-5 mt-6 border-bad/40">
           <div className="text-bad font-medium">Scan error</div>
           <div className="text-sm text-sub mt-1">{error}</div>
         </div>
       )}
 
-      {report && !loading && (
+      {report && !loading && !showGate && (
         <div className="mt-6">
           <Report report={report} />
         </div>
       )}
 
-      {!report && !loading && gateReady && (
+      {!report && !loading && !showGate && gateReady && (
         <section className="mt-12">
           <h2 className="text-sm uppercase tracking-wide text-sub mb-4">What we check</h2>
           <div className="grid sm:grid-cols-2 gap-3">
