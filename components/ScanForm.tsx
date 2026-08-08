@@ -37,9 +37,11 @@ const EXAMPLES: Record<ScanKind, string[]> = {
 export function ScanForm({
   onScan,
   loading,
+  onDemo,
 }: {
   onScan: (kind: ScanKind, value: string) => void;
   loading: boolean;
+  onDemo?: () => void;
 }) {
   const [kind, setKind] = useState<ScanKind>("endpoint");
   const [value, setValue] = useState("");
@@ -47,23 +49,35 @@ export function ScanForm({
 
   return (
     <div className="card p-5 md:p-6">
-      <div className="flex flex-wrap gap-2 mb-4">
-        {TABS.map((t) => (
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap gap-2">
+          {TABS.map((t) => (
+            <button
+              key={t.kind}
+              onClick={() => setKind(t.kind)}
+              className={`px-3.5 py-2 rounded-xl text-sm font-medium transition border ${
+                kind === t.kind
+                  ? "border-brand text-white bg-brand/15"
+                  : "border-line text-sub hover:text-ink hover:bg-panel2"
+              }`}
+            >
+              {t.label}
+              {!t.ready && (
+                <span className="ml-2 text-[10px] uppercase tracking-wide text-warn">soon</span>
+              )}
+            </button>
+          ))}
+        </div>
+        {onDemo && (
           <button
-            key={t.kind}
-            onClick={() => setKind(t.kind)}
-            className={`px-3.5 py-2 rounded-xl text-sm font-medium transition border ${
-              kind === t.kind
-                ? "border-brand text-white bg-brand/15"
-                : "border-line text-sub hover:text-ink hover:bg-panel2"
-            }`}
+            type="button"
+            className="btn-ghost text-sm"
+            disabled={loading}
+            onClick={onDemo}
           >
-            {t.label}
-            {!t.ready && (
-              <span className="ml-2 text-[10px] uppercase tracking-wide text-warn">soon</span>
-            )}
+            Try a Demo Server
           </button>
-        ))}
+        )}
       </div>
 
       <form
@@ -86,7 +100,7 @@ export function ScanForm({
         </button>
       </form>
 
-      <p className="mt-3 text-xs text-sub">{tab.hint}</p>
+      <p className="mt-3 text-xs text-sub">{tab.hint} Average scan: ~15–30 seconds.</p>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-sub">
         <span className="text-sub/70">Try:</span>

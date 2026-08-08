@@ -30,6 +30,8 @@ const COLUMNS: { title: string; tone: string; items: string[] }[] = [
       "Prompt Injection Scanner",
       "AI Security Scanner",
       "Architecture Generator",
+      "Deeper OAuth / agent compatibility polish",
+      "Historical scan comparisons (opt-in)",
     ],
   },
   {

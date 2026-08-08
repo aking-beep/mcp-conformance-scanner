@@ -1,6 +1,7 @@
 // Markdown export for GitHub issues / PRs.
 
 import type { ScanReport } from "./types";
+import { summarizeFindings } from "./severity";
 
 function targetLabel(report: ScanReport): string {
   if (report.target.kind === "endpoint") return report.target.url;
@@ -36,6 +37,12 @@ export function reportToMarkdown(report: ScanReport): string {
   lines.push(`| Security | ${report.security.score}/100 (${report.security.grade}) |`);
   lines.push(`| Enterprise readiness | ${report.enterpriseReadiness}/100 |`);
   lines.push(`| Documentation | ${report.documentationScore}/100 |`);
+  const summary = summarizeFindings(report);
+  lines.push(`| Critical | ${summary.critical} |`);
+  lines.push(`| High | ${summary.high} |`);
+  lines.push(`| Medium | ${summary.medium} |`);
+  lines.push(`| Low | ${summary.low} |`);
+  lines.push(`| Production ready | ${summary.productionReady ? "Yes" : "Not yet"} |`);
   lines.push("");
 
   if (!report.reachable) {

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import type { ScanReport } from "@/lib/mcp/types";
 import { reportToMarkdown } from "@/lib/mcp/markdown";
+import { SEVERITY_META, severityForCheck, summarizeFindings } from "@/lib/mcp/severity";
 import { EmailCapture } from "./EmailCapture";
-import { Gauge, GradeBadge, ScoreBar, StatusChip, colorForScore, statusMeta } from "./visuals";
+import { ReportUseful } from "./ReportUseful";
+import { Gauge, GradeBadge, ScoreBar, colorForScore, statusMeta } from "./visuals";
 
 function HeadlineChip({ label, status, note }: { label: string; status: "pass" | "warn" | "fail"; note: string }) {
   const m = statusMeta(status);
@@ -112,6 +114,7 @@ export function Report({ report }: { report: ScanReport }) {
   }
 
   const md = reportToMarkdown(report);
+  const summary = summarizeFindings(report);
 
   return (
     <div className="space-y-6">
@@ -145,6 +148,38 @@ export function Report({ report }: { report: ScanReport }) {
               <Gauge score={report.documentationScore} size={104} label="Docs" />
             </div>
           </div>
+        </div>
+
+        {/* Scan summary */}
+        <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="rounded-xl border border-line bg-panel2/40 p-3">
+            <div className="text-[11px] uppercase tracking-wide text-sub">Security score</div>
+            <div className="text-xl font-bold mt-0.5" style={{ color: colorForScore(report.security.score) }}>
+              {report.security.score}/100
+            </div>
+          </div>
+          {(["critical", "high", "medium", "low"] as const).map((sev) => (
+            <div key={sev} className="rounded-xl border border-line bg-panel2/40 p-3">
+              <div className="text-[11px] uppercase tracking-wide text-sub flex items-center gap-1">
+                <span>{SEVERITY_META[sev].emoji}</span> {SEVERITY_META[sev].label}
+              </div>
+              <div className="text-xl font-bold mt-0.5" style={{ color: SEVERITY_META[sev].color }}>
+                {summary[sev]}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span
+            className="pill font-medium"
+            style={{
+              color: summary.productionReady ? "#22c55e" : "#f59e0b",
+              borderColor: summary.productionReady ? "rgba(34,197,94,.35)" : "rgba(245,158,11,.35)",
+            }}
+          >
+            Production ready: {summary.productionReady ? "Yes" : "Not yet"}
+          </span>
+          <span className="text-xs text-sub">Based on critical findings, overall score, and security score.</span>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2 text-xs text-sub">
@@ -243,41 +278,51 @@ export function Report({ report }: { report: ScanReport }) {
           <h3 className="font-semibold mb-1">Recommendations</h3>
           <p className="text-sm text-sub mb-4">Issue → why it matters → suggested fix → reference.</p>
           <div className="space-y-3">
-            {report.recommendations.map((rec, i) => (
-              <div key={i} className="rounded-xl border border-line p-4 bg-panel2/40 space-y-3">
-                <div className="flex items-start gap-3">
-                  <StatusChip status={rec.priority === "high" ? "fail" : rec.priority === "medium" ? "warn" : "pass"} text={rec.priority} />
-                  <div className="text-sm font-semibold">{rec.title}</div>
-                </div>
-                <div className="grid gap-2.5 text-sm pl-0 sm:pl-1">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-sub">Issue</div>
-                    <p className="text-ink/90 mt-0.5">{rec.issue}</p>
+            {report.recommendations.map((rec, i) => {
+              const check = rec.checkId ? report.checks.find((c) => c.id === rec.checkId) : undefined;
+              const sev = check ? severityForCheck(check) : rec.priority === "high" ? "high" : rec.priority === "medium" ? "medium" : "low";
+              const meta = sev ? SEVERITY_META[sev] : SEVERITY_META.medium;
+              return (
+                <div key={i} className="rounded-xl border border-line p-4 bg-panel2/40 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="pill shrink-0 font-medium"
+                      style={{ color: meta.color, borderColor: meta.color + "55" }}
+                    >
+                      {meta.emoji} {meta.label}
+                    </span>
+                    <div className="text-sm font-semibold">{rec.title}</div>
                   </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-sub">Why it matters</div>
-                    <p className="text-sub mt-0.5">{rec.why}</p>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-sub">Suggested fix</div>
-                    <p className="text-ink/90 mt-0.5">{rec.fix}</p>
-                  </div>
-                  {rec.reference && (
+                  <div className="grid gap-2.5 text-sm pl-0 sm:pl-1">
                     <div>
-                      <div className="text-[11px] uppercase tracking-wide text-sub">Reference</div>
-                      <a
-                        href={rec.reference}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-brand hover:underline break-all text-xs mt-0.5 inline-block"
-                      >
-                        {rec.reference}
-                      </a>
+                      <div className="text-[11px] uppercase tracking-wide text-sub">Issue</div>
+                      <p className="text-ink/90 mt-0.5">{rec.issue}</p>
                     </div>
-                  )}
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-sub">Why it matters</div>
+                      <p className="text-sub mt-0.5">{rec.why}</p>
+                    </div>
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-sub">How to fix</div>
+                      <p className="text-ink/90 mt-0.5">{rec.fix}</p>
+                    </div>
+                    {rec.reference && (
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wide text-sub">Reference</div>
+                        <a
+                          href={rec.reference}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-brand hover:underline break-all text-xs mt-0.5 inline-block"
+                        >
+                          {rec.reference}
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -348,6 +393,8 @@ export function Report({ report }: { report: ScanReport }) {
           <p className="mt-3 text-xs text-warn">{saveNote}</p>
         )}
       </div>
+
+      <ReportUseful reportId={report.id} grade={report.overall.grade} />
     </div>
   );
 }

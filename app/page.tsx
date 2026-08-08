@@ -7,16 +7,26 @@ import { ScanForm, type ScanKind } from "@/components/ScanForm";
 import { Report } from "@/components/Report";
 import { FeedbackButton } from "@/components/Feedback";
 import type { ScanReport } from "@/lib/mcp/types";
+import {
+  DEMO_ENDPOINT,
+  GITHUB_ISSUES,
+  GITHUB_NEW_BUG,
+  GITHUB_NEW_RULE,
+  SCANNER_UPDATED,
+  SCANNER_VERSION_LABEL,
+} from "@/lib/version";
 
-const FEATURES = [
-  ["Protocol compliance", "Handshake, version, capabilities validated against the MCP spec."],
-  ["Tool & schema validation", "Every tool checked for safe names, typed JSON-Schema, and docs."],
-  ["Resources & prompts", "URI hygiene and prompt definitions verified when advertised."],
-  ["Error handling", "Probes unknown methods and malformed input for graceful JSON-RPC errors."],
-  ["Auth / OAuth 2.1", "PRM, AS metadata, PKCE S256, and refresh_token discovery for remote servers."],
-  ["Security & injection", "TLS, CORS, prompt-injection surface, and destructive-tool guardrails."],
-  ["Streaming support", "Confirms Streamable HTTP (SSE) for progress on long tool calls."],
-  ["Model compatibility", "Estimates fit for Claude, OpenAI, Gemini, and Bedrock."],
+const CURRENT_CHECKS = [
+  "Authentication & OAuth 2.1 discovery",
+  "Tool schema validation",
+  "Prompt-injection surface",
+  "Configuration & capabilities",
+  "Transport / streaming (SSE)",
+  "Missing metadata (serverInfo, version)",
+  "Best-practice compliance",
+  "TLS / CORS / security posture",
+  "Error handling & production readiness",
+  "Model compatibility (Claude / OpenAI / Gemini / Bedrock)",
 ];
 
 type PendingScan = { kind: ScanKind; value: string };
@@ -115,7 +125,6 @@ export default function Home() {
       setShowGate(true);
       setReport(null);
       setError(null);
-      // Scroll gate into view after paint
       requestAnimationFrame(() => {
         document.getElementById("scan-gate")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -135,7 +144,7 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 md:py-14">
-      <header className="flex items-center justify-between mb-10">
+      <header className="flex items-center justify-between mb-8 gap-3">
         <button
           type="button"
           onClick={resetHome}
@@ -150,27 +159,34 @@ export default function Home() {
           </div>
           <div className="min-w-0">
             <div className="font-semibold truncate">MCP Conformance Scanner</div>
-            <div className="text-[11px] text-sub">ARC Labs 0.1 · Release #1</div>
+            <div className="text-[11px] text-sub">
+              {SCANNER_VERSION_LABEL} · Updated {SCANNER_UPDATED}
+            </div>
           </div>
         </button>
-        <nav className="flex items-center gap-4 text-sm text-sub shrink-0">
+        <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm text-sub shrink-0">
           <Link href="/docs" className="hover:text-ink">Docs</Link>
+          <Link href="/changelog" className="hover:text-ink">Changelog</Link>
           <Link href="/roadmap" className="hover:text-ink">Roadmap</Link>
-          <a href="https://github.com/aking-beep/mcp-conformance-scanner" className="hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
+          <a href={GITHUB_ISSUES} className="hover:text-ink" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
       </header>
 
-      <section className="text-center mb-8">
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+      <section className="mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="pill">Free · Open Source · Community Project</span>
-          <span className="pill">ARC Labs 0.1</span>
+          <span className="pill">Built by ARC Labs</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
-          Is your <span style={{ color: "#7c5cff" }}>MCP server</span> ready?
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight max-w-3xl">
+          Scan your MCP server for production readiness in under 30 seconds.
         </h1>
-        <p className="mt-3 text-sub max-w-2xl mx-auto">
-          Paste an endpoint, GitHub repo, or Docker image. Hit Scan — tell us who you are once,
-          then we return your grade and fixes.
+        <ul className="mt-4 space-y-1.5 text-sm md:text-base text-ink/90">
+          <li>✅ Security checks</li>
+          <li>✅ Configuration validation</li>
+          <li>✅ Best practice recommendations</li>
+        </ul>
+        <p className="mt-3 text-sm text-sub">
+          Average scan: ~15–30 seconds · Free forever for basic scans
         </p>
       </section>
 
@@ -185,7 +201,11 @@ export default function Home() {
               Signed in as {access.firstName} ({access.email}). Free scans are rate-limited to protect the service.
             </p>
           )}
-          <ScanForm onScan={onScan} loading={loading || showGate} />
+          <ScanForm
+            onScan={onScan}
+            loading={loading || showGate}
+            onDemo={() => onScan("endpoint", DEMO_ENDPOINT)}
+          />
         </>
       )}
 
@@ -204,7 +224,9 @@ export default function Home() {
             </div>
             <div className="absolute inset-0 animate-sweep" style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)" }} />
           </div>
-          <p className="text-sm text-sub mt-4">Running the MCP handshake and 20+ conformance checks…</p>
+          <p className="text-sm text-sub mt-4">
+            Running the MCP handshake and 20+ conformance checks… usually 15–30 seconds.
+          </p>
         </div>
       )}
 
@@ -222,24 +244,61 @@ export default function Home() {
       )}
 
       {!report && !loading && !showGate && gateReady && (
-        <section className="mt-12">
-          <h2 className="text-sm uppercase tracking-wide text-sub mb-4">What we check</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {FEATURES.map(([title, desc]) => (
-              <div key={title} className="card p-4">
-                <div className="font-medium">{title}</div>
-                <div className="text-sm text-sub mt-1">{desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="mt-10 space-y-6">
+          <section className="card p-5">
+            <h2 className="font-semibold mb-1">Current checks</h2>
+            <p className="text-sm text-sub mb-4">What this scanner actually evaluates today.</p>
+            <ul className="grid sm:grid-cols-2 gap-2 text-sm text-ink/90">
+              {CURRENT_CHECKS.map((c) => (
+                <li key={c} className="flex gap-2">
+                  <span className="text-good shrink-0">•</span>
+                  <span>{c}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="card p-5">
+            <h2 className="font-semibold mb-1">Privacy & data</h2>
+            <p className="text-sm text-sub leading-relaxed">
+              We do not permanently store your MCP server configuration or scan results by default.
+              The scanner analyzes your target, returns the report, and discards the scan unless you
+              explicitly save a permalink or email yourself the report. Signup details (when you unlock
+              a report) are kept so ARC Labs can follow up — not sold.
+            </p>
+          </section>
+
+          <section className="flex flex-wrap gap-2">
+            <a href={GITHUB_NEW_BUG} target="_blank" rel="noreferrer" className="btn-ghost text-sm">
+              Report a Bug
+            </a>
+            <a href={GITHUB_NEW_RULE} target="_blank" rel="noreferrer" className="btn-ghost text-sm">
+              Suggest a Rule
+            </a>
+            <Link href="/changelog" className="btn-ghost text-sm">
+              Changelog
+            </Link>
+            <Link href="/roadmap" className="btn-ghost text-sm">
+              Roadmap
+            </Link>
+          </section>
+        </div>
       )}
 
-      <footer className="mt-16 pt-8 border-t border-line text-sm text-sub flex flex-wrap items-center justify-between gap-3">
-        <span>© {new Date().getFullYear()} ARC Labs · MIT · Free forever · Community project</span>
-        <div className="flex gap-4">
-          <Link href="/docs" className="hover:text-ink">API docs</Link>
-          <Link href="/roadmap" className="hover:text-ink">Public roadmap</Link>
+      <footer className="mt-16 pt-8 border-t border-line text-sm text-sub space-y-3">
+        <p>
+          <span className="text-ink/80 font-medium">Built by ARC Labs</span>
+          {" — "}
+          free tools for AI engineers. {SCANNER_VERSION_LABEL} · Updated {SCANNER_UPDATED}.
+        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span>© {new Date().getFullYear()} ARC Labs · MIT · Community project</span>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/docs" className="hover:text-ink">API docs</Link>
+            <Link href="/changelog" className="hover:text-ink">Changelog</Link>
+            <Link href="/roadmap" className="hover:text-ink">Roadmap</Link>
+            <a href={GITHUB_NEW_BUG} className="hover:text-ink" target="_blank" rel="noreferrer">Report a Bug</a>
+          </div>
         </div>
       </footer>
 

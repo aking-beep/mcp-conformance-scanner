@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { GITHUB_NEW_BUG, GITHUB_NEW_RULE } from "@/lib/version";
 
 export function FeedbackButton() {
   const [open, setOpen] = useState(false);
@@ -42,11 +43,19 @@ export function FeedbackButton() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => setOpen(false)}>
           <div className="card p-5 w-full max-w-md animate-fade-up" onClick={(e) => e.stopPropagation()}>
             {sent ? (
-              <p className="text-good font-medium py-6 text-center">Thanks for the feedback! 🙌</p>
+              <p className="text-good font-medium py-6 text-center">Thanks for the feedback!</p>
             ) : (
               <form onSubmit={submit} className="space-y-3">
                 <h3 className="font-semibold">Send feedback</h3>
                 <p className="text-sm text-sub">Found a bug or want a check added? Tell us.</p>
+                <div className="flex flex-wrap gap-2">
+                  <a href={GITHUB_NEW_BUG} target="_blank" rel="noreferrer" className="btn-ghost text-xs py-1.5">
+                    Report a Bug
+                  </a>
+                  <a href={GITHUB_NEW_RULE} target="_blank" rel="noreferrer" className="btn-ghost text-xs py-1.5">
+                    Suggest a Rule
+                  </a>
+                </div>
                 <textarea
                   required
                   className="input min-h-[110px]"
