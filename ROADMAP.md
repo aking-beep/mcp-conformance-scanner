@@ -1,10 +1,10 @@
 # Public Roadmap — MCP Conformance Scanner
 
-**ARC Labs 0.1 · Release #1** — frozen as a focused Labs utility.
+**ARC Labs · 0.9 Beta**
 
-Success metric for this release: **100+ scans**.
+Success metric: **100+ scans**.
 
-## ✅ Shipped (ARC Labs 0.1)
+## ✅ Shipped
 - MCP endpoint scanning over Streamable HTTP (JSON-RPC 2.0)
 - Handshake / version / capabilities validation
 - Tool, resource, and prompt validation
@@ -22,20 +22,4 @@ Success metric for this release: **100+ scans**.
 - Conformance badge SVG (`GET /api/badge`)
 - GitHub Action for CI conformance gating (`action.yml`, `--min-grade`)
 
-## 🔜 Coming soon — ARC Labs suite
-- Prompt Reviewer
-- Prompt Injection Scanner
-- AI Security Scanner
-- Architecture Generator
-
-## ❌ Intentionally not building (on this scanner)
-- User accounts / teams
-- Billing
-- Dashboards / product analytics
-- AI chat
-- Complex multi-page report builders
-
-## Non-goals
-- Storing scan results without explicit opt-in
-- Paywalling basic scanning — it stays free
-- Turning this into the ARC Platform (separate vision, separate products)
+Suggest features via the in-app feedback button or GitHub issues.
