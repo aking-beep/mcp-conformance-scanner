@@ -104,11 +104,8 @@ or `REPORT_STORE_DIR`.
 
 ## Roadmap
 
-This scanner is **frozen** as ARC Labs Release #1.
-
-**Coming soon (sister tools):** Prompt Reviewer · Prompt Injection Scanner · AI Security Scanner · Architecture Generator.
-
-See [ROADMAP.md](./ROADMAP.md) and the live [/roadmap](https://mcpscanner.arctransformationgrouplab.dev/roadmap) page.
+What’s shipped is listed in [ROADMAP.md](./ROADMAP.md) and on the live [/roadmap](https://mcpscanner.arctransformationgrouplab.dev/roadmap) page.
+Suggest improvements via feedback or GitHub issues.
 
 ---
 
